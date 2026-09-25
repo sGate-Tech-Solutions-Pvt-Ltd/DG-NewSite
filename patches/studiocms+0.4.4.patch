@@ -1,0 +1,325 @@
+diff --git a/node_modules/studiocms/dist/client/apiClient.js b/node_modules/studiocms/dist/client/apiClient.js
+index 828f3e4..fd7ef2d 100644
+--- a/node_modules/studiocms/dist/client/apiClient.js
++++ b/node_modules/studiocms/dist/client/apiClient.js
+@@ -9,7 +9,8 @@ import {
+ } from "@withstudiocms/api-spec";
+ import { AuthAPIError } from "@withstudiocms/api-spec/auth";
+ import * as Effect from "effect/Effect";
+-const baseUrl = site ?? "http://localhost:4321";
++const base = import.meta.env.BASE_URL;
++const baseUrl = (site ?? "http://localhost:4321").replace(/\/$/, "") + (base === "/" ? "" : base.replace(/\/$/, ""));
+ const makeClient = (api) => HttpApiClient.make(api, { baseUrl }).pipe(Effect.provide(FetchHttpClient.layer));
+ const authClient = makeClient(StudioCMSAuthApi);
+ const dashboardClient = makeClient(StudioCMSDashboardApiSpec);
+diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro b/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
+index 8aa1776..0e409cc 100644
+--- a/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
++++ b/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
+@@ -4,15 +4,13 @@ import { runSDK, SDKCoreJs } from 'studiocms:sdk';
+ import { Badge } from 'studiocms:ui/components/badge';
+ import { Card } from 'studiocms:ui/components/card';
+ import { Center } from 'studiocms:ui/components/center';
+-import { allowedIdentifiers, sortByDate, withinLast30Days } from './utils.js';
++import { sortByDate, withinLast30Days } from './utils.js';
+ 
+ // Get all pages and users from the database
+ const allPages = await runSDK(SDKCoreJs.GET.pages(true));
+ 
+-// Filter out the pages that are not allowed
+-const totalPages = allPages
+-	.map((page) => page)
+-	.filter((page) => allowedIdentifiers.includes(page.package));
++// Count all pages regardless of which plugin's pageType created them (see Totals.astro).
++const totalPages = allPages;
+ 
+ const recentlyUpdatedPages = totalPages
+ 	.filter((page) => withinLast30Days(new Date(page.publishedAt)))
+diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro b/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro
+index 7f3ffb4..92f2f6b 100644
+--- a/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro
++++ b/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro
+@@ -4,15 +4,13 @@ import { runSDK, SDKCoreJs } from 'studiocms:sdk';
+ import { Badge } from 'studiocms:ui/components/badge';
+ import { Card } from 'studiocms:ui/components/card';
+ import { Center } from 'studiocms:ui/components/center';
+-import { allowedIdentifiers, sortByDate, withinLast30Days } from './utils.js';
++import { sortByDate, withinLast30Days } from './utils.js';
+ 
+ // Get all pages and users from the database
+ const allPages = await runSDK(SDKCoreJs.GET.pages(true));
+ 
+-// Filter out the pages that are not allowed
+-const totalPages = allPages
+-	.map((page) => page)
+-	.filter((page) => allowedIdentifiers.includes(page.package));
++// Count all pages regardless of which plugin's pageType created them (see Totals.astro).
++const totalPages = allPages;
+ 
+ const recentlyUpdatedPages = totalPages
+ 	.filter((page) => withinLast30Days(page.updatedAt || page.publishedAt))
+diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro b/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro
+index fa966e2..9532fb3 100644
+--- a/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro
++++ b/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro
+@@ -3,14 +3,16 @@ import { runSDK, SDKCoreJs } from 'studiocms:sdk';
+ import { Card } from 'studiocms:ui/components/card';
+ import { Icon } from 'studiocms:ui/components/icon';
+ import { Effect } from '../../effect.js';
+-import { allowedIdentifiers } from './utils.js';
+ 
+ const [allPages, totalUsers] = await runSDK(
+ 	Effect.all([SDKCoreJs.GET.pages(true), SDKCoreJs.GET.users.all()])
+ );
+ 
+-// Filter out the pages that are not allowed
+-const totalPages = allPages.filter((page) => allowedIdentifiers.includes(page.package));
++// Count all pages regardless of which plugin's pageType created them —
++// the built-in allowedIdentifiers allowlist only recognized StudioCMS's
++// own bundled content-editor packages (markdown/html/mdx/markdoc/wysiwyg),
++// undercounting pages from any third-party pageType plugin.
++const totalPages = allPages;
+ 
+ // Filter out for draft pages
+ const totalDraftPages = totalPages.filter((page) => page.draft === true);
+diff --git a/node_modules/studiocms/dist/handlers/pluginHandler.js b/node_modules/studiocms/dist/handlers/pluginHandler.js
+index 7b3b249..530efe2 100644
+--- a/node_modules/studiocms/dist/handlers/pluginHandler.js
++++ b/node_modules/studiocms/dist/handlers/pluginHandler.js
+@@ -749,7 +749,7 @@ const pluginHandler = defineUtility("astro:config:setup")(
+               components.pageActionsComponent = pageActionsComponent;
+             }
+             const remappedComps = Object.entries(components).map(
+-              ([key, value]) => `export { default as ${convertToSafeString(item.title + key)} } from '${value}';`
++              ([key, value]) => `export { default as ${convertToSafeString(item.slug + key)} } from '${value}';`
+             );
+             return remappedComps.join("\n");
+           }).join("\n") || ""
+@@ -767,7 +767,7 @@ const pluginHandler = defineUtility("astro:config:setup")(
+               components.pageActionsComponent = pageActionsComponent;
+             }
+             const remappedComps = Object.entries(components).map(
+-              ([key, value]) => `export { default as ${convertToSafeString(item.title + key)} } from '${value}';`
++              ([key, value]) => `export { default as ${convertToSafeString(item.slug + key)} } from '${value}';`
+             );
+             return remappedComps.join("\n");
+           }).join("\n") || ""
+@@ -784,9 +784,9 @@ const pluginHandler = defineUtility("astro:config:setup")(
+ 							const page = {
+ 								...item,
+ 								components: {
+-									PageBodyComponent: components[convertToSafeString(item.title + 'pageBodyComponent')],
+-									PageActionsComponent: components[convertToSafeString(item.title + 'pageActionsComponent')] || null,
+-									InnerSidebarComponent: item.sidebar === 'double' ? components[convertToSafeString(item.title + 'innerSidebarComponent')] || null : null,
++									PageBodyComponent: components[convertToSafeString(item.slug + 'pageBodyComponent')],
++									PageActionsComponent: components[convertToSafeString(item.slug + 'pageActionsComponent')] || null,
++									InnerSidebarComponent: item.sidebar === 'double' ? components[convertToSafeString(item.slug + 'innerSidebarComponent')] || null : null,
+ 								},
+ 							};
+ 
+@@ -808,9 +808,9 @@ const pluginHandler = defineUtility("astro:config:setup")(
+ 							const page = {
+ 								...item,
+ 								components: {
+-									PageBodyComponent: components[convertToSafeString(item.title + 'pageBodyComponent')],
+-									PageActionsComponent: components[convertToSafeString(item.title + 'pageActionsComponent')] || null,
+-									InnerSidebarComponent: item.sidebar === 'double' ? components[convertToSafeString(item.title + 'innerSidebarComponent')] || null : null,
++									PageBodyComponent: components[convertToSafeString(item.slug + 'pageBodyComponent')],
++									PageActionsComponent: components[convertToSafeString(item.slug + 'pageActionsComponent')] || null,
++									InnerSidebarComponent: item.sidebar === 'double' ? components[convertToSafeString(item.slug + 'innerSidebarComponent')] || null : null,
+ 								},
+ 							};
+ 
+diff --git a/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js b/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js
+index b4dd0ec..6946eb0 100644
+--- a/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js
++++ b/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js
+@@ -5,6 +5,7 @@ const mysqlConfig = Effect.gen(function* () {
+   const port = yield* Config.number("CMS_MYSQL_PORT");
+   const user = yield* Config.redacted("CMS_MYSQL_USER");
+   const password = yield* Config.redacted("CMS_MYSQL_PASSWORD");
++  const ssl = yield* Config.withDefault(Config.boolean("CMS_MYSQL_SSL"), false);
+   const config = {
+     driver: "mysql",
+     connection: {
+@@ -12,7 +13,8 @@ const mysqlConfig = Effect.gen(function* () {
+       host,
+       port,
+       user: Redacted.value(user),
+-      password: Redacted.value(password)
++      password: Redacted.value(password),
++      ...ssl ? { ssl: { minVersion: "TLSv1.2", rejectUnauthorized: true } } : {}
+     }
+   };
+   return config;
+diff --git a/node_modules/studiocms/dist/utils/lang-helper.js b/node_modules/studiocms/dist/utils/lang-helper.js
+index c7b817d..59f3826 100644
+--- a/node_modules/studiocms/dist/utils/lang-helper.js
++++ b/node_modules/studiocms/dist/utils/lang-helper.js
+@@ -1,4 +1,4 @@
+-import { fileURLToPath } from "node:url";
++import { fileURLToPath, pathToFileURL } from "node:url";
+ import { glob } from "tinyglobby";
+ async function loadJsTranslations(path, base) {
+   const translations = {};
+@@ -8,7 +8,7 @@ async function loadJsTranslations(path, base) {
+     const alias = file.replace(/\.js$/, "");
+     const translation = await import(
+       /* @vite-ignore */
+-      `${translationsDir}/${file}`
++      pathToFileURL(`${translationsDir}/${file}`).href
+     );
+     translations[alias] = translation.default;
+   }
+diff --git a/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro b/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro
+index c969ff8..d4faa8f 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro
+@@ -6,7 +6,7 @@ interface Props {
+ 
+ const { name, identifier } = Astro.props;
+ 
+-const href = Astro.locals.StudioCMS.routeMap.mainLinks.plugins + identifier;
++const href = `${Astro.locals.StudioCMS.routeMap.mainLinks.plugins}/${identifier}`;
+ 
+ const isActive = Astro.url.pathname === href && 'active';
+ ---
+diff --git a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
+index 6c233a7..b88ecc6 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
+@@ -602,7 +602,7 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
+           pluginFields,
+         };
+       }),
+-      Schema.decodeUnknown(EditPageDataFromFormDataObjectSchema),
++      Effect.flatMap(Schema.decodeUnknown(EditPageDataFromFormDataObjectSchema)),
+       Effect.flatMap((payload) =>
+         dashboardClient.pipe(
+           Effect.flatMap((client) =>
+diff --git a/node_modules/studiocms/frontend/middleware/index.ts b/node_modules/studiocms/frontend/middleware/index.ts
+index a39387d..4943f7e 100644
+--- a/node_modules/studiocms/frontend/middleware/index.ts
++++ b/node_modules/studiocms/frontend/middleware/index.ts
+@@ -51,6 +51,13 @@ const LogLevelLive = Config.withDefault(
+ // This allows for flexibility in the dashboard route without hardcoding it
+ const dashboardRoute = dashboardConfig.dashboardRouteOverride || 'dashboard';
+ 
++// All includePaths/excludePaths below are matched against `context.url.pathname`,
++// which includes Astro's configured `base` — these patterns must too, or every
++// route-gated middleware here (session population, auth checks, CSRF) silently
++// never matches once a `base` is configured, with no error, just as if the
++// user were never logged in.
++const base = import.meta.env.BASE_URL.replace(/\/$/, '');
++
+ /**
+  * Helper function to create a standard 200 OK response.
+  *
+@@ -86,7 +93,7 @@ export const onRequest = defineMiddlewareRouter([
+ 				MIDDLEWARES: { verifyCache },
+ 			} = yield* SDKCore;
+ 
+-			if (!['/studiocms_api/dashboard/verify-session'].includes(context.url.pathname)) {
++			if (!([`${base}/studiocms_api/dashboard/verify-session`]).includes(context.url.pathname)) {
+ 				yield* verifyCache();
+ 			}
+ 
+@@ -114,7 +121,7 @@ export const onRequest = defineMiddlewareRouter([
+ 		 * This middleware sets up the user session data, email verification status,
+ 		 * and user permission levels for the dashboard routes.
+ 		 */
+-		includePaths: [`/${dashboardRoute}/**`, '/studiocms_api/**'],
++		includePaths: [`${base}/${dashboardRoute}/**`, `${base}/studiocms_api/**`],
+ 		priority: 2,
+ 		handler: Effect.fn(function* (context, next) {
+ 			const { getUserData, isEmailVerificationEnabled } = yield* Effect.gen(function* () {
+@@ -146,18 +153,18 @@ export const onRequest = defineMiddlewareRouter([
+ 		}),
+ 	},
+ 	{
+-		includePaths: [`/${dashboardRoute}/**`],
++		includePaths: [`${base}/${dashboardRoute}/**`],
+ 		excludePaths: [
+-			`/${dashboardRoute}/login`,
+-			`/${dashboardRoute}/login/**`,
+-			`/${dashboardRoute}/signup`,
+-			`/${dashboardRoute}/signup/**`,
+-			`/${dashboardRoute}/logout`,
+-			`/${dashboardRoute}/logout/**`,
+-			`/${dashboardRoute}/forgot-password`,
+-			`/${dashboardRoute}/forgot-password/**`,
+-			`/${dashboardRoute}/password-reset`,
+-			`/${dashboardRoute}/password-reset/**`,
++			`${base}/${dashboardRoute}/login`,
++			`${base}/${dashboardRoute}/login/**`,
++			`${base}/${dashboardRoute}/signup`,
++			`${base}/${dashboardRoute}/signup/**`,
++			`${base}/${dashboardRoute}/logout`,
++			`${base}/${dashboardRoute}/logout/**`,
++			`${base}/${dashboardRoute}/forgot-password`,
++			`${base}/${dashboardRoute}/forgot-password/**`,
++			`${base}/${dashboardRoute}/password-reset`,
++			`${base}/${dashboardRoute}/password-reset/**`,
+ 		],
+ 		priority: 3,
+ 		handler: defineDataMiddleware(
+@@ -176,7 +183,7 @@ export const onRequest = defineMiddlewareRouter([
+ 					// Get the required role from the headers, defaulting to 'none' if not provided
+ 					// This is an 'Opt-in' Middleware
+ 					const requiredRole = data['x-required-role'] ?? 'none';
+-					const redirectUrl = data['x-redirect-url'] ?? `/${dashboardRoute}`;
++					const redirectUrl = data['x-redirect-url'] ?? `${base}/${dashboardRoute}`;
+ 
+ 					// If the required role is 'none', allow access without checking user data
+ 					if (requiredRole === 'none') {
+diff --git a/node_modules/studiocms/frontend/pages/studiocms_api/[...all].ts b/node_modules/studiocms/frontend/pages/studiocms_api/[...all].ts
+index 9035324..b6f2731 100644
+--- a/node_modules/studiocms/frontend/pages/studiocms_api/[...all].ts
++++ b/node_modules/studiocms/frontend/pages/studiocms_api/[...all].ts
+@@ -103,4 +103,27 @@ const APILive: Layer.Layer<Api, never, never> = config.features.api.apiDocs
+ /**
+  * Astro API Route - Converts the combined Effect API stack into an Astro route for serving the API documentation and endpoints.
+  */
+-export const ALL: APIRoute = HttpApiToAstroRoute(APILive);
++const apiHandler: APIRoute = HttpApiToAstroRoute(APILive);
++
++/**
++ * Effect's own HttpApi router matches endpoints (e.g. POST /studiocms_api/auth/login)
++ * against the request's raw URL, which still includes Astro's `base` prefix
++ * (e.g. /DG-studiocms/studiocms_api/auth/login) — Astro only strips `base` for
++ * its own page routing, not for the Request object handed to endpoint handlers.
++ * Without this, every request here fails to match any declared endpoint once a
++ * `base` is configured: GET falls through to the `router.get('*', ...)` catch-all
++ * and redirects to /404, but there's no equivalent wildcard for other methods,
++ * so e.g. POST logins get a bare unhandled 404 instead.
++ */
++export const ALL: APIRoute = async (context) => {
++	const base = import.meta.env.BASE_URL;
++	if (base && base !== '/') {
++		const url = new URL(context.request.url);
++		const prefix = base.endsWith('/') ? base.slice(0, -1) : base;
++		if (url.pathname.startsWith(prefix)) {
++			url.pathname = url.pathname.slice(prefix.length) || '/';
++			context.request = new Request(url, context.request);
++		}
++	}
++	return apiHandler(context);
++};
+diff --git a/node_modules/studiocms/frontend/pages/studiocms_api/_handlers/auth/auth.ts b/node_modules/studiocms/frontend/pages/studiocms_api/_handlers/auth/auth.ts
+index d63b01f..b0f4dad 100644
+--- a/node_modules/studiocms/frontend/pages/studiocms_api/_handlers/auth/auth.ts
++++ b/node_modules/studiocms/frontend/pages/studiocms_api/_handlers/auth/auth.ts
+@@ -290,6 +290,13 @@ export const AuthAPIHandler = HttpApiBuilder.group(StudioCMSAuthApi, 'auth', (ha
+ 				},
+ 				// Provide the necessary dependencies for the login handler
+ 				Effect.provide(loginRegisterDependencies),
++				// Workaround: HttpApiBuilder's automatic AuthAPIError encoding fails in this
++				// bundled runtime (schema-tag identity mismatch), causing a 500/timeout instead
++				// of the declared 400 response. Build the response manually instead, same
++				// escape hatch already used by the `logout` handler below.
++				Effect.catchTag('AuthAPIError', (err) =>
++					Effect.succeed(HttpServerResponse.unsafeJson({ error: err.error }, { status: 400 }))
++				),
+ 				// Catch any errors that occur during the login process and return a generic error message to prevent exposing sensitive information about the failure.
+ 				Effect.catchTags(sharedCatchTags)
+ 			)

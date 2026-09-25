@@ -1,0 +1,39 @@
+diff --git a/node_modules/@withstudiocms/api-spec/dist/dashboard/routes/plugins.mjs b/node_modules/@withstudiocms/api-spec/dist/dashboard/routes/plugins.mjs
+index 61824e0..86d0bf7 100644
+--- a/node_modules/@withstudiocms/api-spec/dist/dashboard/routes/plugins.mjs
++++ b/node_modules/@withstudiocms/api-spec/dist/dashboard/routes/plugins.mjs
+@@ -1,5 +1,5 @@
+ import { AstroLocalsMiddleware } from "../../astro-context.mjs";
+-import { PluginPathParamSchema, PluginSettingsPayload, successResponseSchema } from "../schemas.mjs";
++import { PluginPathParamSchema, successResponseSchema } from "../schemas.mjs";
+ import { DashboardAPIError } from "../errors.mjs";
+ import { HttpApiEndpoint } from "@effect/platform";
+ import { Description, Summary, Title } from "@effect/platform/OpenApi";
+@@ -13,6 +13,6 @@ import { Description, Summary, Title } from "@effect/platform/OpenApi";
+ * - This endpoint requires user authentication via Astro Locals Context.
+ * - Users must be logged into the current StudioCMS instance with appropriate permissions to use this endpoint.
+ */
+-const pluginsSettingsPost = HttpApiEndpoint.post("savePluginSettings", "/plugins/:plugin").setPath(PluginPathParamSchema).annotate(Title, "Save Plugin Settings").annotate(Summary, "Save settings for a specific plugin").annotate(Description, "Saves the settings for a specific plugin in the StudioCMS dashboard.\n\n> [!note]\n> This endpoint verifies User authentication using [Astro Locals Context](https://docs.astro.build/en/guides/middleware/#storing-data-in-contextlocals) and requires users to be logged into the current StudioCMS instance with appropriate permissions.").middleware(AstroLocalsMiddleware).setPayload(PluginSettingsPayload).addSuccess(successResponseSchema).addError(DashboardAPIError, { status: 400 }).addError(DashboardAPIError, { status: 403 }).addError(DashboardAPIError, { status: 500 });
++const pluginsSettingsPost = HttpApiEndpoint.post("savePluginSettings", "/plugins/:plugin").setPath(PluginPathParamSchema).annotate(Title, "Save Plugin Settings").annotate(Summary, "Save settings for a specific plugin").annotate(Description, "Saves the settings for a specific plugin in the StudioCMS dashboard.\n\n> [!note]\n> This endpoint verifies User authentication using [Astro Locals Context](https://docs.astro.build/en/guides/middleware/#storing-data-in-contextlocals) and requires users to be logged into the current StudioCMS instance with appropriate permissions.").middleware(AstroLocalsMiddleware).addSuccess(successResponseSchema).addError(DashboardAPIError, { status: 400 }).addError(DashboardAPIError, { status: 403 }).addError(DashboardAPIError, { status: 500 });
+ //#endregion
+ export { pluginsSettingsPost };
+diff --git a/node_modules/@withstudiocms/api-spec/dist/dashboard/schemas.mjs b/node_modules/@withstudiocms/api-spec/dist/dashboard/schemas.mjs
+index 762f849..75df5a4 100644
+--- a/node_modules/@withstudiocms/api-spec/dist/dashboard/schemas.mjs
++++ b/node_modules/@withstudiocms/api-spec/dist/dashboard/schemas.mjs
+@@ -456,6 +456,7 @@ const modeSelectorSchema = Schema.Struct({ mode: Schema.Literal("create", "edit"
+ const TaxonomyTagData = Schema.Struct({
+ 	...modeSelectorSchema.fields,
+ 	...StudioCMSPageDataTags.Select.fields,
++	id: Schema.optional(Schema.Number),
+ 	type: Schema.Literal("tags")
+ }).annotations({
+ 	title: "Taxonomy Tag Data",
+@@ -467,6 +468,7 @@ const TaxonomyTagData = Schema.Struct({
+ const TaxonomyCategoryData = Schema.Struct({
+ 	...modeSelectorSchema.fields,
+ 	...StudioCMSPageDataCategories.Select.fields,
++	id: Schema.optional(Schema.Number),
+ 	type: Schema.Literal("categories")
+ }).annotations({
+ 	title: "Taxonomy Category Data",

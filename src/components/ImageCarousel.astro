@@ -1,0 +1,335 @@
+---
+/**
+ * ImageCarousel.astro
+ * Swipeable image gallery — arrows, segmented progress bar, slide counter,
+ * zoom and expand (lightbox) controls. Touch/drag enabled.
+ */
+
+export interface CarouselImage {
+  src: string;
+  alt: string;
+}
+
+export interface Props {
+  images: CarouselImage[];
+}
+
+const { images } = Astro.props;
+---
+
+<div class="imgCarousel" data-total={images.length}>
+  <div class="imgCarousel-viewport" id="imgViewport">
+    <div class="imgCarousel-track" id="imgTrack">
+      {images.map((img, i) => (
+        <div class="imgCarousel-slide" data-index={i}>
+          <img src={img.src} alt={img.alt} loading={i === 0 ? 'eager' : 'lazy'} draggable="false" />
+        </div>
+      ))}
+    </div>
+
+    <button class="imgCarousel-arrow prev" id="imgPrev" aria-label="Previous image" type="button">
+      <i class="fas fa-chevron-left" aria-hidden="true"></i>
+    </button>
+    <button class="imgCarousel-arrow next" id="imgNext" aria-label="Next image" type="button">
+      <i class="fas fa-chevron-right" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="imgCarousel-progress" id="imgProgress" aria-hidden="true">
+    {images.map((_, i) => (
+      <span class="imgCarousel-progress-seg" data-seg={i}></span>
+    ))}
+  </div>
+
+  <div class="imgCarousel-bar">
+    <span class="imgCarousel-counter"><span id="imgCurrent">1</span> / {images.length}</span>
+    <div class="imgCarousel-actions">
+      <button class="imgCarousel-btn" id="imgZoom" aria-label="Zoom image" type="button">
+        <i class="fas fa-magnifying-glass-plus" aria-hidden="true"></i>
+      </button>
+      <button class="imgCarousel-btn" id="imgExpand" aria-label="Expand image" type="button">
+        <i class="fas fa-expand" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="imgCarousel-lightbox" id="imgLightbox" aria-hidden="true">
+    <button class="imgCarousel-lightbox-close" id="imgLightboxClose" aria-label="Close" type="button">
+      <i class="fas fa-xmark" aria-hidden="true"></i>
+    </button>
+    <img id="imgLightboxImg" src="" alt="" />
+  </div>
+</div>
+
+<style>
+  .imgCarousel {
+    width: 100%;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .imgCarousel-viewport {
+    position: relative;
+    width: 100%;
+   
+  
+    touch-action: pan-y;
+  }
+
+  .imgCarousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.35s ease;
+  }
+
+  .imgCarousel-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f7f7f7;
+  }
+
+  .imgCarousel-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    transition: transform 0.25s ease;
+    cursor: zoom-in;
+  }
+
+  .imgCarousel-slide img.zoomed {
+    transform: scale(1.7);
+    cursor: zoom-out;
+  }
+
+  .imgCarousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.85);
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: background 0.2s ease;
+  }
+
+  .imgCarousel-arrow:hover {
+    background: #fff;
+  }
+
+  .imgCarousel-arrow.prev {
+    left: 10px;
+  }
+
+  .imgCarousel-arrow.next {
+    right: 10px;
+  }
+
+  .imgCarousel-progress {
+    display: flex;
+    gap: 4px;
+    padding: 10px 14px 0;
+  }
+
+  .imgCarousel-progress-seg {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: #e0e0e0;
+    transition: background 0.2s ease;
+  }
+
+  .imgCarousel-progress-seg.active {
+    background: #000;
+  }
+
+  .imgCarousel-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px 12px;
+  }
+
+  .imgCarousel-counter {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 0.95rem;
+    color: #444;
+  }
+
+  .imgCarousel-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .imgCarousel-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .imgCarousel-btn:hover {
+    background: #000;
+    color: #fff;
+  }
+
+  .imgCarousel-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 9999;
+    transition: opacity 0.2s ease;
+  }
+
+  .imgCarousel-lightbox.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .imgCarousel-lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+  }
+
+  .imgCarousel-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.imgCarousel').forEach((carousel) => {
+    const track = carousel.querySelector<HTMLElement>('.imgCarousel-track')!;
+    const viewport = carousel.querySelector<HTMLElement>('.imgCarousel-viewport')!;
+    const slides = Array.from(carousel.querySelectorAll<HTMLElement>('.imgCarousel-slide'));
+    const segs = Array.from(carousel.querySelectorAll<HTMLElement>('.imgCarousel-progress-seg'));
+    const prevBtn = carousel.querySelector<HTMLButtonElement>('#imgPrev')!;
+    const nextBtn = carousel.querySelector<HTMLButtonElement>('#imgNext')!;
+    const zoomBtn = carousel.querySelector<HTMLButtonElement>('#imgZoom')!;
+    const expandBtn = carousel.querySelector<HTMLButtonElement>('#imgExpand')!;
+    const currentEl = carousel.querySelector<HTMLElement>('#imgCurrent')!;
+    const lightbox = carousel.querySelector<HTMLElement>('#imgLightbox')!;
+    const lightboxImg = carousel.querySelector<HTMLImageElement>('#imgLightboxImg')!;
+    const lightboxClose = carousel.querySelector<HTMLButtonElement>('#imgLightboxClose')!;
+
+    const total = slides.length;
+    let index = 0;
+    let zoomed = false;
+
+    function render() {
+      track.style.transform = `translateX(-${index * 100}%)`;
+      currentEl.textContent = String(index + 1);
+      segs.forEach((seg, i) => seg.classList.toggle('active', i <= index));
+    }
+
+    function goTo(next: number) {
+      index = (next + total) % total;
+      zoomed = false;
+      slides.forEach((s) => s.querySelector('img')?.classList.remove('zoomed'));
+      zoomBtn.querySelector('i')!.className = 'fas fa-magnifying-glass-plus';
+      render();
+    }
+
+    prevBtn.addEventListener('click', () => goTo(index - 1));
+    nextBtn.addEventListener('click', () => goTo(index + 1));
+
+    zoomBtn.addEventListener('click', () => {
+      const img = slides[index].querySelector('img')!;
+      zoomed = !zoomed;
+      img.classList.toggle('zoomed', zoomed);
+      zoomBtn.querySelector('i')!.className = zoomed
+        ? 'fas fa-magnifying-glass-minus'
+        : 'fas fa-magnifying-glass-plus';
+    });
+
+    expandBtn.addEventListener('click', () => {
+      const img = slides[index].querySelector('img')!;
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt;
+      lightbox.classList.add('open');
+      lightbox.setAttribute('aria-hidden', 'false');
+    });
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      lightbox.setAttribute('aria-hidden', 'true');
+    }
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    // Swipe / drag support
+    let startX = 0;
+    let deltaX = 0;
+    let dragging = false;
+
+    viewport.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      startX = e.clientX;
+      deltaX = 0;
+      track.style.transition = 'none';
+    });
+
+    viewport.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      deltaX = e.clientX - startX;
+      track.style.transform = `translateX(calc(-${index * 100}% + ${deltaX}px))`;
+    });
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      track.style.transition = 'transform 0.35s ease';
+      const threshold = viewport.offsetWidth * 0.15;
+      if (deltaX > threshold) goTo(index - 1);
+      else if (deltaX < -threshold) goTo(index + 1);
+      else render();
+    }
+
+    viewport.addEventListener('pointerup', endDrag);
+    viewport.addEventListener('pointerleave', endDrag);
+    viewport.addEventListener('pointercancel', endDrag);
+
+    render();
+  });
+</script>

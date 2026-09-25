@@ -1,0 +1,69 @@
+---
+/**
+ * src/pages/contact.astro
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContactForm from '../components/ContactForm.astro';
+import { withBase } from '../lib/withBase';
+---
+
+<BaseLayout
+  title="Contact — Dylan Gemelli"
+  description="Get in touch with Dylan Gemelli. Book a consultation or send a message."
+  solidNav
+>
+  <!-- ═══ PAGE HERO ═══════════════════════════════════════════════════════ -->
+  <section class="page-hero contactHero"  aria-label="Contact hero">
+    <div
+      class="page-hero-bg"
+      style={`background-image: url('${withBase('/images/contact_bg.jpg')}');`}
+      role="img"
+      aria-label="Contact hero background"
+    ></div>
+    <div class="page-hero-overlay" aria-hidden="true"></div>
+    <div class="page-hero-content">
+      <h1 class="page-title wow slideInDown">Contact <br /> Dylan Gemelli</h1>
+    <!--  <p class="contact-name-display"></p>-->
+    </div>
+  </section>
+
+  <!-- ═══ CONTACT FORM ════════════════════════════════════════════════════ -->
+  <ContactForm
+    heading="Contact Dylan Gemelli"
+    submitLabel="Submit"
+    imageSrc={withBase('/images/page1_img8.jpeg')}
+    imageAlt="Dylan Gemelli"
+    successMessage="Thank you for reaching out! Dylan will get back to you soon."
+    sourcePage="contact"
+  />
+
+  <!-- ═══ FEATURED VIDEO ══════════════════════════════════════════════════ -->
+ <section class="video-section" aria-label="My True Purpose video">
+    <div class="video-section-wrap wow slideInUp">
+      <h2>My True Purpose</h2>
+      <div class="video-box">
+     <iframe width="560" height="315" src="https://www.youtube.com/embed/X459Sl-yofo?si=Hcuw6w__i-igokWr" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="" data-astro-cid-kh7btl4r=""></iframe>
+      </div>
+      <a
+        href="https://www.youtube.com/@DylanGemelliBiohacking"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn-yellow"
+      >
+        <i class="fab fa-youtube" aria-hidden="true"></i> Watch Now
+      </a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact-name-display {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--yellow);
+    margin-top: 10px;
+  }
+</style>

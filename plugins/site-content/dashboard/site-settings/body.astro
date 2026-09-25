@@ -1,0 +1,77 @@
+---
+// Custom replacement for StudioCMS's built-in `settingsPage` mechanism.
+// That mechanism (a plain native <form> POSTing to the `savePluginSettings`
+// HttpApi endpoint) hits an unresolved "Decode error" in StudioCMS's
+// underlying Effect HTTP layer on every save, even though the save itself
+// succeeds. This page avoids that endpoint entirely: it's a normal
+// server-rendered dashboard page (like Contact Submissions) that reads
+// current values fresh on every visit and submits via fetch() to our own
+// /api/site-config-save route — sidestepping the buggy code path completely.
+import { Button } from 'studiocms:ui/components/button';
+import { Card } from 'studiocms:ui/components/card';
+import DynamicSettingsRenderer from 'studiocms/frontend/components/shared/DynamicSettingsRenderer.astro';
+import { getPool } from '../../../../src/lib/db.ts';
+import { buildFields, fieldGroups } from '../../settings/site-config.mjs';
+
+const [rows] = await getPool().query(`SELECT * FROM plugin_site_config WHERE id = 'default' LIMIT 1`);
+const fields = buildFields(rows[0]);
+const fieldsByName = Object.fromEntries(fields.map((f) => [f.name, f]));
+const groupedFields = fieldGroups.map((group) => ({
+  title: group.title,
+  fields: group.fields.map((name) => fieldsByName[name]).filter(Boolean),
+}));
+---
+
+<form id="site-settings-form" class="site-settings-form">
+  {groupedFields.map((group) => (
+    <Card fullWidth>
+      <div slot="header">{group.title}</div>
+      <div class="site-settings-group">
+        <DynamicSettingsRenderer fields={group.fields} />
+      </div>
+    </Card>
+  ))}
+  <Button type="submit" variant="solid" color="primary">Save Changes</Button>
+</form>
+
+<style>
+  .site-settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 700px;
+  }
+
+  .site-settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+</style>
+
+<script>
+  import { toast } from 'studiocms:ui/components/toaster/client';
+  import { withBase } from '../../../../src/lib/withBase.ts';
+
+  const form = document.getElementById('site-settings-form');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton?.setAttribute('disabled', 'true');
+
+    try {
+      const response = await fetch(withBase('/api/site-config-save'), {
+        method: 'POST',
+        body: new FormData(form),
+      });
+      if (!response.ok) throw new Error('Save failed');
+      toast({ title: 'Saved', description: 'Site content settings updated.', type: 'success' });
+    } catch (err) {
+      console.error('Failed to save site settings:', err);
+      toast({ title: 'Error', description: 'Failed to save settings.', type: 'danger' });
+    } finally {
+      submitButton?.removeAttribute('disabled');
+    }
+  });
+</script>

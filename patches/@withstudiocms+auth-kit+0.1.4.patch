@@ -1,0 +1,13 @@
+diff --git a/node_modules/@withstudiocms/auth-kit/dist/modules/session.js b/node_modules/@withstudiocms/auth-kit/dist/modules/session.js
+index 20fda59..4db73f5 100644
+--- a/node_modules/@withstudiocms/auth-kit/dist/modules/session.js
++++ b/node_modules/@withstudiocms/auth-kit/dist/modules/session.js
+@@ -23,7 +23,7 @@ const Session = (config) => Effect.gen(function* () {
+     });
+   }
+   const expTimeHalf = expTime / 2;
+-  const defaultSecure = process.env.NODE_ENV === "production";
++  const defaultSecure = process.env.NODE_ENV === "production" && process.env.CMS_INSECURE_COOKIES !== "true";
+   const generateSessionToken = Effect.fn(
+     "@withstudiocms/AuthKit/modules/session.generateSessionToken"
+   )(

@@ -1,0 +1,202 @@
+---
+/**
+ * src/pages/about.astro
+ *
+ * StudioCMS content mappings
+ * ──────────────────────────
+ * Each alternating dark/light section's body text is now a real StudioCMS
+ * page, edited from the dashboard (Content Management). Slugs used:
+ *   - about-wellness-revolutionary
+ *   - about-mind-body-connector
+ *   - about-aging-optimizer
+ *   - about-god-first
+ *
+ * Layout, theme (dark/light), images, and ordering remain code-controlled
+ * here, since those are structural/design decisions, not editorial content.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SDKCoreJs, runSDK } from 'studiocms:sdk';
+import { StudioCMSRenderer } from 'studiocms:renderer';
+import { withBase } from '../lib/withBase';
+import { getSiteConfig } from '../lib/content';
+
+const site = await getSiteConfig();
+
+// Hero title preserves the original 3-line reveal animation (line 1 slides
+// down, the rest slide up) by defaulting to the current 3 lines and mapping
+// any admin-entered line breaks the same way — first line gets slideInDown,
+// the rest get slideInUp, matching the current design intent generically.
+const aboutHeroTitleText = site.aboutHeroTitle || 'About\nDylan\nGemelli';
+const aboutHeroTitleLines = aboutHeroTitleText.split(/\r\n|\r|\n/);
+
+// My True Purpose video: admins enter a normal YouTube/Vimeo watch/share
+// URL; this converts it to the embeddable iframe src the page needs.
+function toEmbedUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtube.com')) {
+      if (u.pathname.startsWith('/embed/')) return url;
+      const id = u.searchParams.get('v');
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+    if (u.hostname === 'youtu.be') {
+      const id = u.pathname.slice(1);
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+    if (u.hostname.includes('vimeo.com')) {
+      if (u.pathname.startsWith('/video/')) return url;
+      const id = u.pathname.split('/').filter(Boolean).pop();
+      if (id) return `https://player.vimeo.com/video/${id}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
+const aboutPurposeVideoUrl = site.aboutPurposeVideoUrl || 'https://www.youtube.com/watch?v=X459Sl-yofo';
+const aboutPurposeEmbedUrl = toEmbedUrl(aboutPurposeVideoUrl);
+
+interface AboutSection {
+  theme: 'dark' | 'light';
+  slug: string;
+  imageSrc: string;
+  imageAlt: string;
+  /** When true image appears on the right, text on the left */
+  imageRight: boolean;
+}
+
+// Structural config — theme, images, slugs. Body text lives in StudioCMS.
+const sectionConfig: AboutSection[] = [
+  {
+    theme: 'dark',
+    slug: 'about-wellness-revolutionary',
+    imageSrc: withBase('/images/page5_img2.jpeg'),
+    imageAlt: 'Dylan Gemelli — The Wellness Revolutionary',
+    imageRight: false,
+  },
+  {
+    theme: 'light',
+    slug: 'about-mind-body-connector',
+    imageSrc: withBase('/images/page5_img3.jpeg'),
+    imageAlt: 'Mind-Body Connection',
+    imageRight: true,
+  },
+  {
+    theme: 'dark',
+    slug: 'about-aging-optimizer',
+    imageSrc: withBase('/images/page5_img4.jpeg'),
+    imageAlt: 'Dylan Gemelli — The Aging Optimizer',
+    imageRight: false,
+  },
+  {
+    theme: 'light',
+    slug: 'about-god-first',
+    imageSrc: withBase('/images/page5_img5.jpeg'),
+    imageAlt: 'God First — Dylan Gemelli',
+    imageRight: true,
+  },
+];
+
+// Fetch each page's data + title from StudioCMS by slug.
+const sections = await Promise.all(
+  sectionConfig.map(async (config) => {
+    const pageData = await runSDK(SDKCoreJs.GET.page.bySlug(config.slug));
+    return {
+      ...config,
+      title: pageData?.title ?? '',
+      pageData,
+    };
+  })
+);
+---
+
+<BaseLayout
+  title="About — Dylan Gemelli"
+  description="Learn about Dylan Gemelli — The Wellness Revolutionary. Biohacker, podcaster, and longevity expert."
+  solidNav
+>
+  <!-- ═══ PAGE HERO ═══════════════════════════════════════════════════════ -->
+  <section class="page-hero aboutHero" aria-label="About hero">
+    <div
+      class="page-hero-bg"
+      style={`background-image: url('${site.aboutHeroImage || withBase('/images/about_bg.jpg')}');`}
+      role="img"
+      aria-label="About hero background"
+    ></div>
+    <div class="page-hero-overlay" aria-hidden="true"></div>
+        <div class="container">
+       <div class="row">
+    <div class="page-hero-content">
+      <div class="page-label ">
+        <h1 class="page-title aboutpagetitle wow slideInDown textRight">
+        {aboutHeroTitleLines.map((line, i) => (
+          <Fragment key={i}>
+            <span class={i === 0 ? 'wow slideInDown' : 'wow slideInUp'}> {line}</span>
+            {i < aboutHeroTitleLines.length - 1 && <br />}
+          </Fragment>
+        ))}</h1>
+    </div>
+   </div>
+       </div>
+  </section>
+
+  <!-- ═══ ALTERNATING SECTIONS ════════════════════════════════════════════ -->
+  {sections.map((section) => (
+    <section
+      class={section.theme === 'dark' ? 'about-section-dark' : 'about-section-light'}
+      aria-label={section.title}
+    >
+      <div class={section.theme === 'dark' ? 'about-section-dark-wrap' : 'about-section-light-wrap'}>
+        {!section.imageRight && (
+          <div class={section.theme === 'dark ' ? 'about-dark-img' : 'about-light-img'}>
+            <img
+              src={section.imageSrc}
+              alt={section.imageAlt}
+              loading="lazy"
+              width="600"
+              height="750"
+            />
+          </div>
+        )}
+        <div class={section.theme === 'dark' ? 'about-dark-text' : 'about-light-text'}>
+          <h2>{section.title}</h2>
+          {section.pageData ? (
+            <StudioCMSRenderer data={section.pageData} />
+          ) : (
+            <p><em>Content not found for "{section.slug}". Create this page in the StudioCMS dashboard.</em></p>
+          )}
+        </div>
+        {section.imageRight && (
+          <div class={section.theme === 'dark' ? 'about-dark-img' : 'about-light-img'}>
+            <img
+              src={section.imageSrc}
+              alt={section.imageAlt}
+              loading="lazy"
+              width="600"
+              height="750"
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  ))}
+
+  <!-- ═══ VIDEO — TRUE PURPOSE ════════════════════════════════════════════ -->
+  <section class="video-section" aria-label="My True Purpose video">
+    <div class="video-section-wrap wow slideInUp">
+      <h2>{site.aboutPurposeTitle || 'My True Purpose'}</h2>
+      <div class="video-box">
+     <iframe width="560" height="315" src={aboutPurposeEmbedUrl} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="" data-astro-cid-kh7btl4r=""></iframe>
+      </div>
+      <a
+        href={site.aboutPurposeButtonUrl || 'https://www.youtube.com/@DylanGemelliBiohacking'}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn-yellow"
+      >
+        <i class="fab fa-youtube" aria-hidden="true"></i> {site.aboutPurposeButtonText || 'Watch Now'}
+      </a>
+    </div>
+  </section>
+</BaseLayout>

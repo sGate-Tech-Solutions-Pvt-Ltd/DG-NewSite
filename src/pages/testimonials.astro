@@ -1,0 +1,87 @@
+---
+/**
+ * src/pages/testimonials.astro
+ * Backend-managed via the site-content StudioCMS plugin.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getTestimonials, getSiteConfig } from '../lib/content';
+
+const testimonials = await getTestimonials();
+const site = await getSiteConfig();
+---
+
+<BaseLayout
+  title="Testimonials — Dylan Gemelli"
+  description="What industry leaders and wellness experts say about Dylan Gemelli."
+  solidNav
+>
+  <!-- ═══ PAGE HERO ═══════════════════════════════════════════════════════ -->
+  <section class="page-hero testimonialHero" aria-label="Testimonials hero">
+    <div
+      class="page-hero-bg"
+      style={`background-image: url('${site.testimonialsBgImage}');`}
+      role="img"
+      aria-label="Testimonials hero background"
+    ></div>
+    <div class="page-hero-overlay" aria-hidden="true"></div>
+    <div class="page-hero-content">
+      <h1 class="page-title">{site.testimonialsHeroTitle || 'Testimonials'}</h1>
+    </div>
+  </section>
+
+  <!-- ═══ TESTIMONIALS GRID ═══════════════════════════════════════════════ -->
+  <section class="testiPagemain"
+    style=" padding:80px 20px;"
+    aria-label="All testimonials"
+  >
+
+
+
+<div class="container_testimoial">
+
+<div class="TestimonialsPage ">
+  {testimonials.length === 0 && (
+    <p class="testiEmpty">No testimonials yet — check back soon.</p>
+  )}
+
+  {testimonials.map((t) => (
+    <div class="TestimonialsMian wow slideInUp">
+      <div class="TestimonialsInner">
+        <div class="Testimonialscontainer">
+          <div class="Testimonialsleft">
+            <div class="testiPhoto">
+              <figure>
+                <img src={t.avatar || '../images/photoimghover.png'} alt={t.authorName} />
+              </figure>
+              <i class="testiHover">
+                <img src="../images/photoimghover.png" alt="" />
+              </i>
+            </div>
+          </div>
+
+          <div class="TestimonialsRight">
+            <div class="testiContent">
+              <i class="quoteTesti">
+                <img src="../images/quote.png" alt="" />
+              </i>
+
+              {t.authorTitle && <h3>{t.authorTitle}</h3>}
+
+              <span class="lineTesti"></span>
+
+              <p>{t.quote}</p>
+            </div>
+
+            <div class="testiname"><i class="rippleCircle"></i> <strong>{t.authorName}</strong></div>
+
+            <div class="Testishape"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+</div>
+  </section>
+</BaseLayout>

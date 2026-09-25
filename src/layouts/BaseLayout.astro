@@ -1,0 +1,119 @@
+---
+/**
+ * BaseLayout.astro
+ * Root layout wrapping every page. Provides <head>, global CSS, nav, footer,
+ * and the video-modal island. All per-page metadata is passed as props.
+ */
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import VideoModal from '../components/VideoModal.astro';
+import '../styles/global.css';
+
+import '../styles/animate.css';
+import '../styles/responsive.css';
+import wowScriptUrl from '../styles/wow.min.js?url';
+import { withBase } from '../lib/withBase';
+
+export interface Props {
+  /** Browser <title> */
+  title: string;
+  /** Meta description */
+  description?: string;
+  /** Open-Graph image URL */
+  ogImage?: string;
+  /** When true the navbar starts fully opaque (inner pages) */
+  solidNav?: boolean;
+}
+
+const {
+  title,
+  description = 'Dylan Gemelli — The Wellness Revolutionary. Biohacking, longevity and mind-body connection.',
+  ogImage = withBase('/images/og-default.jpg'),
+  solidNav = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:type" content="website" />
+    <!-- Canonical handled by StudioCMS sitemap integration -->
+    <!-- Font Awesome 6 via CDN (icon set) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <!-- Google Fonts preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Libre+Franklin:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+
+<link href="https://db.onlinewebfonts.com/c/a9a32791b85434321c530b30453ddac1?family=ITCFranklinGothic+LT+Pro+Bk" rel="stylesheet"> 
+
+
+
+
+    <slot name="head" />
+  </head>
+  <body id="scrollTopp">
+    <Navbar solid={solidNav} />
+
+    <main>
+      <slot />
+    </main>
+
+    <Footer />
+    <VideoModal />
+
+    <!-- Navbar scroll behaviour — lightweight vanilla JS island -->
+    <script>
+      const navbar = document.getElementById('navbar')!;
+      window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+      });
+
+      // Mobile toggle
+      const mobileToggle = document.getElementById('mobileToggle');
+      const navLinksEl = document.getElementById('navLinks');
+
+      mobileToggle?.addEventListener('click', () => {
+        const isOpen = navLinksEl?.classList.toggle('active');
+        mobileToggle.classList.toggle('active', isOpen);
+        mobileToggle.setAttribute('aria-expanded', String(!!isOpen));
+      });
+
+      // Close the mobile menu after tapping a nav link
+      navLinksEl?.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          navLinksEl.classList.remove('active');
+          mobileToggle?.classList.remove('active');
+          mobileToggle?.setAttribute('aria-expanded', 'false');
+        });
+      });
+    </script>
+
+
+    <script is:inline src={wowScriptUrl}></script>
+    <script>
+      new WOW().init();
+    </script>
+
+
+
+  </body>
+</html>

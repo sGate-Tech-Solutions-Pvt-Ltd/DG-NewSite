@@ -1,0 +1,60 @@
+---
+/**
+ * Navbar.astro
+ * Site-wide navigation. `solid` prop forces the opaque state immediately
+ * (used on inner pages that begin without a full-bleed hero image).
+ */
+import { withBase } from '../lib/withBase';
+
+export interface Props {
+  solid?: boolean;
+}
+
+const { solid = false } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+interface NavLink {
+  href: string;
+  label: string;
+}
+
+const navLinks: NavLink[] = [
+  { href: '/podcast', label: 'Podcast' },
+  { href: '/protocol', label: 'Protocol' },
+  { href: '/partners', label: 'Partners' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+
+<nav class={`navbar${solid ? ' solid' : ''}`} id="navbar" aria-label="Main navigation">
+  <a href={withBase('/')} class="nav-logo" aria-label="Dylan Gemelli — Home">Dylan Gemelli</a>
+
+  <ul class="nav-links" id="navLinks" role="menubar">
+    {navLinks.map(({ href, label }) => (
+      <li role="none">
+        <a
+          href={withBase(href)}
+          role="menuitem"
+          aria-current={currentPath.startsWith(withBase(href)) ? 'page' : undefined}
+        >
+          {label}
+        </a>
+      </li>
+    ))}
+    <li role="none">
+      <a href={withBase('/contact')} class="btn-book" role="menuitem">Book Now</a>
+    </li>
+  </ul>
+
+  <button
+    class="mobile-toggle"
+    id="mobileToggle"
+    aria-label="Toggle navigation menu"
+    aria-expanded="false"
+    aria-controls="navLinks"
+  >
+    <i class="fas fa-bars" aria-hidden="true"></i>
+    <i class="fas fa-times" aria-hidden="true"></i>
+  </button>
+</nav>

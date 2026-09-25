@@ -1,0 +1,143 @@
+---
+/**
+ * src/pages/partners.astro
+ * Backend-managed via the site-content StudioCMS plugin.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContactForm from '../components/ContactForm.astro';
+import { getPartners, getSiteConfig } from '../lib/content';
+import { withBase } from '../lib/withBase';
+
+const partnersRaw = await getPartners();
+const partners = partnersRaw.filter((p) => p.active);
+const site = await getSiteConfig();
+
+// Hero title preserves the original manual line break ("Dylan's Trusted" /
+// "Partners") by defaulting to it and splitting any admin-entered line
+// breaks into <br/> — same approach as the subtitle/description fields.
+const partnersTitleText = site.partnersHeroTitle || "Dylan's Trusted\nPartners";
+const partnersTitleLines = partnersTitleText.split(/\r\n|\r|\n/);
+
+// Hero subtitle bolds "CREDIBILITY"/"TRANSPARENCY" wherever they appear —
+// kept working for admin-entered text by splitting on those two words at
+// render time rather than storing HTML in the field.
+const partnersSubtitleText = site.partnersHeroSubtitle || "I value CREDIBILITY and TRANSPARENCY. The following are partners that I believe have KEY items in obtaining quality of life through the mind-body connection.";
+const partnersSubtitleParts = partnersSubtitleText.split(/(CREDIBILITY|TRANSPARENCY)/i);
+---
+
+<BaseLayout
+  title="Partners — Dylan Gemelli"
+  description="Trusted wellness partners handpicked by Dylan Gemelli. Exclusive discount codes included."
+  solidNav
+>
+  <!-- ═══ PAGE HERO ═══════════════════════════════════════════════════════ -->
+  <section class="page-hero partnerHero"  aria-label="Partners hero">
+    <div
+      class="page-hero-bg"
+      style={`background-image: url('${site.partnersHeroImage || withBase('/images/partherobanner.jpg')}');`}
+      role="img"
+      aria-label="Partners hero background"
+    ></div>
+    <div class="page-hero-overlay" aria-hidden="true"></div>
+    <div class="page-hero-content">
+      <h1 class="page-title wow slideInUp">
+        {partnersTitleLines.map((line, i, lines) => (
+          <Fragment key={i}>
+            {line}
+            {i < lines.length - 1 && <br />}
+          </Fragment>
+        ))}
+      </h1>
+      <p class="page-hero-subtitle  wow slideInUp">
+        {partnersSubtitleParts.map((part) =>
+          /^(CREDIBILITY|TRANSPARENCY)$/i.test(part) ? <strong>{part}</strong> : part
+        )}
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ PARTNERS LIST ═══════════════════════════════════════════════════ -->
+  <section class="partners-list " aria-label="Partner directory">
+    <div class="container">
+     <div class="row">
+      {partners.map((p, i) => (
+        <article class="partner-row wow slideInUp" data-wow-delay={`${(i % 5) * 0.2}s`}>
+          {p.logo ? (
+            <div class="partner-logo-box">
+              <img
+                src={p.logo}
+                alt={`${p.name} logo`}
+                loading="lazy"
+                width="140"
+                height="140"
+              />
+            </div>
+          ) : (
+            <div class="partner-logo-box partner-logo-icon" aria-hidden="true">
+              <i class={`fas ${p.icon}`} style="font-size:3rem;color:var(--yellow);"></i>
+            </div>
+          )}
+
+          <div class="partner-info">
+            <h3>{p.name}</h3>
+            <p>{p.description}</p>
+            {p.discountLabel && (
+              <div class="discount-red">{p.discountLabel}</div>
+            )}
+            {p.couponCode && (
+              <div class="coupon-code">
+                Coupon Code: <strong>{p.couponCode}</strong>
+              </div>
+            )}
+            <a
+              href={p.href}
+              class="buy-btn"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Shop ${p.name}${p.discountLabel ? ` — ${p.discountLabel}` : ''}`}
+            >
+              Buy Now
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+      </div>
+  </section>
+
+  <!-- ═══ BECOME A PARTNER FORM ══════════════════════════════════════════ -->
+  <ContactForm
+    heading={site.partnerFormHeading || 'Interested in Becoming a Partner?'}
+    submitLabel="Apply Now"
+    imageSrc={site.partnerFormImage || withBase('/images/page4_img16.jpeg')}
+    imageAlt="Dylan Gemelli"
+    successMessage="Thank you for your interest in partnering! We will be in touch."
+    sourcePage="partners"
+  />
+</BaseLayout>
+
+<style>
+  .page-hero-subtitle {
+    font-family: 'Libre Franklin', sans-serif;
+    color: #ccc;
+    font-size: 1rem;
+    max-width: 700px;
+    margin: 20px auto 0;
+    line-height: 1.7;
+  }
+
+  .partner-logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+  }
+
+  /* Override h2 inside partner rows */
+  .partner-info h2 {
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+</style>

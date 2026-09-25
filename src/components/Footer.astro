@@ -1,0 +1,130 @@
+---
+/**
+ * Footer.astro
+ * Site-wide footer with quick links, newsletter signup, and social icons.
+ * Social URLs are pulled from StudioCMS site settings (siteConfig).
+ * The newsletter form is a client-side island (progressively enhanced).
+ */
+
+import { withBase } from '../lib/withBase';
+import { getSiteConfig } from '../lib/content';
+
+interface SocialLink {
+  href: string;
+  icon: string;
+  label: string;
+}
+
+const site = await getSiteConfig();
+
+// Site Settings' "Social Links" fields (socialInstagram, etc.) existed but
+// were never read anywhere — this was still a hardcoded stub. Falls back to
+// the current URLs so nothing changes until an admin edits Site Settings.
+const socials: SocialLink[] = [
+  { href: site.socialInstagram || 'https://instagram.com/dylangemelli', icon: 'fa-instagram', label: 'Instagram' },
+  { href: site.socialFacebook || 'https://facebook.com/dylangemelli', icon: 'fa-facebook-f', label: 'Facebook' },
+  { href: site.socialX || 'https://x.com/dylangemelli', icon: 'fa-x-twitter', label: 'X (Twitter)' },
+  { href: site.socialYoutube || 'https://youtube.com/@DylanGemelliBiohacking', icon: 'fa-youtube', label: 'YouTube' },
+  { href: site.socialTikTok || 'https://tiktok.com/@dylangemelli', icon: 'fa-tiktok', label: 'TikTok' },
+];
+
+const quickLinks = [
+  { href: '/podcast', label: 'Podcast' },
+  { href: '/protocol', label: 'Protocol' },
+  { href: '/partners', label: 'Partners' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="footer-wrap">
+
+
+<div class="fttakehealt"><h2>Take Control of Your Health Now!</h2></div>
+
+
+    <div class="footer-grid">
+
+      <!-- Quick Links -->
+      <div class="footer-col">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          {quickLinks.map(({ href, label }) => (
+            <li><a href={withBase(href)}>{label}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Newsletter -->
+      <div class="footer-col">
+        <h3>Subscribe to the Newsletter</h3>
+        <form class="newsletter-form" id="newsletterForm" novalidate>
+          <label for="newsletter-email" class="sr-only">Email address</label>
+          <div class="footersubcribe">
+           <div class="ftGroup">
+            <input
+            type="email"
+            id="newsletter-email"
+            name="email"
+            placeholder="Email Address"
+            required
+            autocomplete="email"
+          />   </div>
+            <div class="ftbtnn">
+          <button type="submit">Sign Up</button>
+           </div>   </div>
+        </form>
+      </div>
+
+      <!-- Social links -->
+      <div class="footer-col">
+        <h3>Follow Dylan</h3>
+        <nav class="socials" aria-label="Social media links">
+          {socials.map(({ href, icon, label }) => (
+            <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+              <i class={`fab ${icon}`} aria-hidden="true"></i>
+            </a>
+          ))}
+        </nav>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; {year} DylanGemelli.com — All Rights Reserved.</p>
+    </div>
+
+
+    <div class="topgo">
+    <a href="#scrollTopp" >
+   <i class="fa-solid fa-arrow-up"></i>
+    </a>
+</div>
+  </div>
+</footer>
+
+<!-- Screen-reader utility class -->
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+</style>
+
+<script>
+  document.getElementById('newsletterForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    // Replace with real API call (Mailchimp, ConvertKit, etc.)
+    alert('Thank you for subscribing!');
+    form.reset();
+  });
+</script>

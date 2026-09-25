@@ -1,0 +1,391 @@
+---
+/**
+ * src/pages/protocol.astro
+ * Backend-managed via the site-content StudioCMS plugin.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ImageCarousel from '../components/ImageCarousel.astro';
+import PartnersCarousel from '../components/PartnersCarousel.astro';
+import {
+  getProtocolItems,
+  getSiteConfig,
+  getPartners,
+  getTestimonials,
+  getYoutubeVideos,
+} from '../lib/content';
+import { withBase } from '../lib/withBase';
+
+// ── Fetch dynamic content from StudioCMS-managed pages ─────────────────────
+const partnersRaw  = await getPartners();
+const testimonials = await getTestimonials();
+const videos       = await getYoutubeVideos();
+const items        = await getProtocolItems();
+const site         = await getSiteConfig();
+
+const partners = partnersRaw.filter((p) => p.active);
+const featuredTestimonials = testimonials.filter((t) => t.featured);
+const featuredVideos = videos.filter((v) => v.featured).slice(0, 3);
+
+// "My Trusted Partners" carousel reuses the existing Partner content type's
+// logo images (same as index.astro) instead of a separate hardcoded list —
+// getPartners() already applies withBase() to `logo`. Falls back to the
+// original static images only if no partner has a logo set yet.
+const partnerLogoImages = partners
+  .filter((p) => p.logo)
+  .map((p) => ({ src: p.logo, alt: p.name }));
+const trustedPartnerImages = partnerLogoImages.length > 0
+  ? partnerLogoImages
+  : [
+      { src: withBase('/images/img-justthrivehealth.webp'), alt: 'Protocol' },
+      { src: withBase('/images/img-Auro-Wellness.webp'), alt: 'Podcast' },
+      { src: withBase('/images/Stealth-apollo-front_SV.webp'), alt: 'Health & fitness' },
+      { src: withBase('/images/timeline.webp'), alt: 'Health & fitness' },
+      { src: withBase('/images/img-Jinfiniti.webp'), alt: 'Health & fitness' },
+      { src: withBase('/images/img-Youngr-with-capsules.webp'), alt: 'Health & fitness' },
+    ];
+
+// About Preview heading highlights its last word in gold via a static
+// <span> — kept working for any admin-entered title by splitting off the
+// last word at render time rather than hardcoding which word is gold.
+const aboutTitle = site.aboutTitle || 'The Wellness Revolutionary';
+const aboutTitleWords = aboutTitle.trim().split(/\s+/);
+const aboutTitleHighlight = aboutTitleWords.pop() || '';
+const aboutTitleRest = aboutTitleWords.join(' ');
+
+const aboutDescriptionDefault = `I am here to immerse you in the world of fitness and biohacking. Through the Dylan Gemelli Podcast, I engage with leading health and wellness experts, sharing insights that leverage the latest in fitness and longevity strategies.
+
+My goal is simply stated: Provide EVERYONE the insight and guidance to obtain the highest quality of life! I am here to teach, motivate and inspire you all to be the best you can be in all aspects of health!
+
+Dylan is a God first family man that is set on doing God's work, which for him, is helping everyone to not just add years to their lives, but life to their years!`;
+
+const aboutParagraphs = (site.aboutDescription || aboutDescriptionDefault)
+  .split(/\r\n\s*\r\n|\n\s*\n/)
+  .map((p) => p.trim())
+  .filter(Boolean);
+
+// YouTube section heading highlights its last 2 words in gold.
+const youtubeSectionHeading = site.youtubeSectionHeading || 'Discover Videos That Matter';
+const youtubeHeadingWords = youtubeSectionHeading.trim().split(/\s+/);
+const youtubeHeadingHighlight = youtubeHeadingWords.splice(-2, 2).join(' ');
+const youtubeHeadingRest = youtubeHeadingWords.join(' ');
+---
+
+<BaseLayout
+  title="Protocol — Dylan Gemelli"
+  description="The Dylan Gemelli Protocol — science-backed biohacking for mind, body, and cellular health."
+  solidNav
+>
+  <!-- ═══ PAGE HERO ═══════════════════════════════════════════════════════ -->
+  <section class="page-hero protocolHero"  aria-label="Protocol hero">
+    <div
+      class="page-hero-bg"
+      style={`background-image: url('${site.protocolHeroImage || withBase('/images/protocol_bg.jpg')}');`}
+      role="img"
+      aria-label="Protocol hero background"
+    ></div>
+    <div class="page-hero-overlay" aria-hidden="true"></div>
+    <div class="page-hero-content">
+      <div class="page-label wow slideInDown">WELCOME TO</div>
+      <h1 class="newpagetitle wow slideInUp">{site.protocolHeroTitle || 'The Dylan Gemelli'}</h1>
+      <!--<p class="page-hero-subtitle">
+        A comprehensive approach to optimizing your mind, body, and spirit
+        through science-backed biohacking strategies.
+      </p>-->
+
+            <a href={withBase('/protocol')} class="btn-yellow myprotcol wow slideInUp">My Protocol</a>
+    </div>
+  </section>
+
+  <!-- ═══ STATS ══════════════════════════════════════════════════════════ -->
+  <section class="stats-section" id="stats" aria-label="Key statistics">
+    <div class="stats-wrap">
+      <div class="stats-left  wow slideInUp">
+        <h2>{site.statsHeading || 'Obtain the Mind-Body Connection'}</h2>
+        <p>
+          {site.statsBody || "Transform your health through the powerful connection between mental clarity and physical vitality. Discover protocols that optimize both mind and body for peak performance."}
+        </p>
+      </div>
+      <div class="stats-grid  wow slideInUp" role="list">
+        <div class="stat-item " role="listitem ">
+   
+          <span class="stat-num">{site.statFollowers}</span>
+        <div class="statics_icon">
+         <i class="fab fa-instagram" aria-hidden="true" data-astro-cid-sz7xmlte=""></i>
+          <span class="stat-label">Instagram <br/>Followers</span>
+          </div>
+        </div>
+        <div class="stat-item" role="listitem">
+     
+          <span class="stat-num">{site.statExperience}</span>
+              <div class="statics_icon">
+       <i class="fa-solid fa-headphones"></i>
+          <span class="stat-label">Years<br/> Experience</span>
+        </div>
+          </div>
+        <div class="stat-item" role="listitem">
+        
+          <span class="stat-num">{site.statCredentials}</span>
+           <div class="statics_icon">
+       <i class="fa-solid fa-award""></i>
+          <span class="stat-label">Degrees &amp; <br/> Certificates</span>
+        </div>
+          </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PODCAST PREVIEW ════════════════════════════════════════════════ -->
+  <section class="podcast-home" id="podcast" aria-label="Podcast preview">
+    <div
+      class="podcast-home-bg"
+      style={`background-image: url('${site.podcastBgImage}');`}
+      role="img"
+      aria-label="Podcast background"
+    ></div>
+    <div class="podcast-home-overlay" aria-hidden="true"></div>
+    <div class="podcast-home-content">
+     <!--  <span class="badge-yellow">Listen Now</span>-->
+      <h2 class="section-title-gold  wow slideInDown">{site.podcastHeroTitle || 'The Dylan Gemelli Podcast'}</h2>
+      <p class="section-desc  wow slideInUp">
+        {(site.podcastHeroSubtitle || "Rated #1 in Health and Fitness and Alternative Health on Apple and a consistent top 10 Trending Podcast on Spotify.")
+          .split(/\r\n|\r|\n/)
+          .map((line, i, lines) => (
+            <Fragment key={i}>
+              {line}
+              {i < lines.length - 1 && <br />}
+            </Fragment>
+          ))}
+      </p>
+   <!--
+      <div class="podcast-badges-row">
+        <div class="badge-item">
+          <i class="fab fa-apple" aria-hidden="true"></i>
+          <span>#1 Health &amp; Fitness</span>
+        </div>
+        <div class="badge-item">
+          <i class="fab fa-spotify" aria-hidden="true"></i>
+          <span>Top 10 Trending</span>
+        </div>
+        <div class="badge-item ">
+          <i class="fas fa-download" aria-hidden="true"></i>
+          <span>50K+ Daily Downloads</span>
+        </div>
+      </div>-->
+
+      <a href={withBase('/podcast')} class="btn-yellow  wow slideInUp">
+        <i class="fas fa-play " aria-hidden="true"></i> Listen Now
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ═══ ABOUT PREVIEW ══════════════════════════════════════════════════ -->
+  <section class="about-home" id="about" aria-label="About Dylan">
+    <div class="about-home-wrap">
+      <div class="about-home-img  wow slideInUp">
+        <img
+          src={site.aboutImage || withBase('/images/the_wellness_revolutionary.jpg')}
+          alt="Dylan Gemelli — The Wellness Revolutionary"
+          width="600"
+          height="800"
+          loading="lazy"
+        />
+      </div>
+      <div class="about-home-text  wow slideInUp">
+        <h2>"{aboutTitleRest && `${aboutTitleRest} `}<span>{aboutTitleHighlight}"</span></h2>
+        {aboutParagraphs.map((para) => (
+          <p>
+            {para.split(/\r\n|\r|\n/).map((line, i, lines) => (
+              <Fragment key={i}>
+                {line}
+                {i < lines.length - 1 && <br />}
+              </Fragment>
+            ))}
+          </p>
+        ))}
+        <a href={withBase('/about')} class="btn-yellow  wow slideInUp">About Me</a>
+      </div>
+    </div>
+  </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <!-- ═══ YOUTUBE VIDEOS ═════════════════════════════════════════════════ -->
+  <section class="youtube-section" id="youtube" aria-label="YouTube videos">
+    <div class="youtube-wrap">
+      <div class="youtube-header  wow slideInDown">
+        <h2>{youtubeHeadingRest && `${youtubeHeadingRest} `}<span>{youtubeHeadingHighlight}</span></h2>
+        <!--<p>Latest content from the Dylan Gemelli Biohacking channel</p>-->
+      </div>
+
+      <div class="youtube-grid  wow slideInUp">
+        {featuredVideos.map((video) => (
+          <div
+            class="video-card"
+            data-video={video.videoId}
+            role="button"
+            tabindex="0"
+            aria-label={`Play: ${video.title}`}
+          >
+            <img
+              src={video.thumbnail}
+              alt={video.title}
+              loading="lazy"
+              width="400"
+              height="225"
+            />
+            <div class="video-play" aria-hidden="true">
+              <i class="fas fa-play"></i>
+            </div>
+            <div class="video-title">{video.title}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style="text-align: center;">
+        <a
+          href={site.youtubeChannelUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-white"
+        >
+          <i class="fab fa-youtube" aria-hidden="true"></i> Subscribe
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+
+
+<div class="trustedmain">
+<div class="container">
+<div class="row">
+<div class="trustedContent">
+
+<div class="trustedleft">
+<h2 class=" wow slideInUp">{site.partnersSectionHeading || 'My Trusted Partners'}</h2>
+<p class="wow slideInDown">
+  {(site.partnersSectionSubtitle || 'I Value CREDIBILITY and TRANSPARENCY')
+    .split(/\r\n|\r|\n/)
+    .map((line, i, lines) => (
+      <Fragment key={i}>
+        {line}
+        {i < lines.length - 1 && <br />}
+      </Fragment>
+    ))}
+</p>
+  <a href={withBase('/partners')}  class="btn-yellow wow slideInDown">Learn More </a>
+</div>
+<div class="trustedRight wow slideInDown">
+<ImageCarousel images={trustedPartnerImages} />
+
+
+
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  <!-- ═══ CTA ════════════════════════════════════════════════════════════ -->
+  <section class="protocol-cta  wow slideInDown" aria-label="Book a consultation">
+    <div style="max-width:700px;margin:0 auto;">
+      <h2>{site.protocolCtaTitle || 'Ready to Transform?'}</h2>
+      <p>
+        {site.protocolCtaBody || "Take the first step towards optimizing your health and achieving the mind-body connection you've been searching for."}
+      </p>
+      <a href={withBase('/contact')} class="btn-yellow">Book a Consultation</a>
+    </div>
+  </section>
+
+
+
+
+
+  <!-- ═══ TESTIMONIALS ═══════════════════════════════════════════════════ -->
+  <section class="testimonials-section" id="testimonials" aria-label="Testimonials">
+    <div
+      class="testimonials-bg"
+   /***style={`background-image: url('${site.testimonialsBgImage}');`}**/
+
+           style={`background-image: url('../images/testimonial_bg.jpg');`}
+      role="img"
+      aria-label="Testimonials background"
+    ></div>
+    <div class="testimonials-overlay" aria-hidden="true"></div>
+    <div class="testimonials-wrap">
+      <div class="testimonials-header wow slideInDown">
+        <h2>{site.testimonialsHeroTitle || 'Testimonials'}</h2>
+      </div>
+
+      <div class="testimonials-grid">
+        {featuredTestimonials.map((t) => (
+          <article class="t-card wow slideInDown">
+            <p class="t-quote">"{t.quote}"</p>
+            <div class="t-author">
+              <div class="t-avatar" aria-hidden="true">{t.initials}</div>
+              <div class="t-info">
+                <h4>{t.authorName}</h4>
+                <p>{t.authorTitle}</p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div style="text-align: center; margin-top: 40px;">
+        <a href={withBase('/testimonials')} class="btn-yellow">Read More</a>
+      </div>
+    </div>
+  </section>
+
+
+
+
+
+
+
+
+</BaseLayout>
+
+<style>
+  .page-hero-subtitle {
+    font-family: 'Libre Franklin', sans-serif;
+    color: #ccc;
+    font-size: 1rem;
+    max-width: 700px;
+    margin: 20px auto 0;
+    line-height: 1.7;
+  }
+
+  /* This carousel now pulls live Partner `logo` uploads instead of a fixed
+     curated image set, so pin the box to a square regardless of what shape
+     any given logo is (matches the same fix on index.astro). */
+  .trustedRight :global(.imgCarousel-viewport) {
+    aspect-ratio: 1 / 1;
+  }
+</style>

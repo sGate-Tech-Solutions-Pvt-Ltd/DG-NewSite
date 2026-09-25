@@ -1,0 +1,26 @@
+{
+  "name": "dylan-gemelli-studiocms",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "postinstall": "patch-package",
+    "build:lowmem": "NODE_OPTIONS=--max-old-space-size=2048 astro build"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.5.5",
+    "@libsql/client": "^0.15.15",
+    "@studiocms/md": "^0.3.0",
+    "astro": "^5.0.0",
+    "mysql2": "^3.22.5",
+    "patch-package": "^8.0.1",
+    "studiocms": "^0.4.4"
+  },
+  "devDependencies": {
+    "sass": "^1.77.0"
+  }
+}

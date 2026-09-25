@@ -1,0 +1,45 @@
+---
+// This content type has no markdown/body content — all its data lives in the
+// structured fields above. StudioCMS's page editor still requires a
+// `page-content` field to exist in the form, so this stays hidden and empty.
+---
+<textarea id="page-content" name="page-content" hidden></textarea>
+
+<script>
+  // The edit page (EditPage.astro, core StudioCMS) only ever renders each
+  // custom field's static `defaultValue` from its schema — it has no concept
+  // of "the value already saved for this page" (that lives in our own
+  // plugin_* tables, which core StudioCMS doesn't know about). Without this,
+  // every reopen of the editor shows blank/default custom fields, making a
+  // successful save look like it silently reverted. Fetch the real row and
+  // populate the fields StudioCMS already rendered for us.
+  const pageIdInput = document.querySelector<HTMLInputElement>('[name="page-id"]');
+  const pageTypeSelect = document.querySelector<HTMLSelectElement>('[name="page-type"]');
+  const fieldsContainer = document.getElementById('custom-page-type-fields');
+
+  const pageId = pageIdInput?.value;
+  const pageType = pageTypeSelect?.value;
+
+  if (pageId && pageType && fieldsContainer) {
+    fetch(`/api/plugin-field-values?type=${encodeURIComponent(pageType)}&pageId=${encodeURIComponent(pageId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((row: Record<string, unknown> | null) => {
+        if (!row) return;
+        for (const [key, value] of Object.entries(row)) {
+          const el = fieldsContainer.querySelector<HTMLInputElement>(`[name="${key}"]`);
+          if (!el) continue;
+          if (el.type === 'checkbox') {
+            // @studiocms/ui's checkbox draws its checkmark from a sibling
+            // element's `aria-checked`, kept in sync only by a `change`
+            // listener (see @studiocms/ui/dist/components/Checkbox/checkbox.js)
+            // — setting `.checked` alone leaves the visual state stale.
+            el.checked = value === 1 || value === true;
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          } else if (value !== null && value !== undefined) {
+            el.value = String(value);
+          }
+        }
+      })
+      .catch((err) => console.error('[site-content] failed to load saved field values:', err));
+  }
+</script>

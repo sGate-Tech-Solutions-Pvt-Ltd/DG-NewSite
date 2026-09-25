@@ -1,0 +1,119 @@
+---
+/**
+ * ContactForm.astro
+ * Reusable two-column form section (image + form).
+ * Used on Contact, Podcast (guest inquiry) and Partners pages.
+ */
+import { Image } from 'astro:assets';
+import { withBase } from '../lib/withBase';
+
+export interface Props {
+  heading: string;
+  submitLabel?: string;
+  imageSrc: string;
+  imageAlt: string;
+  successMessage?: string;
+  sourcePage?: string;
+}
+
+const {
+  heading,
+  submitLabel = 'Submit',
+  imageSrc,
+  imageAlt,
+  successMessage = 'Thank you! We will be in touch soon.',
+  sourcePage,
+} = Astro.props;
+
+const formId = `form-${Math.random().toString(36).slice(2, 8)}`;
+const contactApiPath = withBase('/api/contact');
+---
+
+<section class="guest-section">
+  <div class="guest-wrap">
+    <div class="guest-img wow slideInUp">
+      <img src={imageSrc} alt={imageAlt} loading="lazy" width="600" height="800" />
+    </div>
+
+    <div class="guest-form wow slideInUp">
+      <h2>{heading}</h2>
+      <form id={formId} novalidate>
+        <div class="form-group">
+          <label for={`${formId}-name`} class="sr-only">Full Name</label>
+          <input
+            type="text"
+            id={`${formId}-name`}
+            name="fullName"
+            placeholder="Full Name..."
+            required
+            autocomplete="name"
+          />
+        </div>
+        <div class="form-group">
+          <label for={`${formId}-email`} class="sr-only">Email Address</label>
+          <input
+            type="email"
+            id={`${formId}-email`}
+            name="email"
+            placeholder="Email Address..."
+            required
+            autocomplete="email"
+          />
+        </div>
+        <div class="form-group">
+          <label for={`${formId}-subject`} class="sr-only">Subject</label>
+          <input
+            type="text"
+            id={`${formId}-subject`}
+            name="subject"
+            placeholder="Subject..."
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for={`${formId}-message`} class="sr-only">Message</label>
+          <textarea
+            id={`${formId}-message`}
+            name="message"
+            placeholder="Write your message..."
+            required
+          ></textarea>
+        </div>
+        {sourcePage && <input type="hidden" name="sourcePage" value={sourcePage} />}
+        <p class="form-error" hidden>Something went wrong. Please try again.</p>
+        <button type="submit" class="form-submit">{submitLabel}</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border-width: 0;
+  }
+  .form-error { color: #c0392b; }
+</style>
+
+<script define:vars={{ formId, successMessage, contactApiPath }}>
+  document.getElementById(formId)?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errorEl = form.querySelector('.form-error');
+    errorEl?.setAttribute('hidden', '');
+
+    try {
+      const response = await fetch(contactApiPath, {
+        method: 'POST',
+        body: new FormData(form),
+      });
+      if (!response.ok) throw new Error('Request failed');
+      alert(successMessage);
+      form.reset();
+    } catch (err) {
+      console.error('Contact form submission failed:', err);
+      errorEl?.removeAttribute('hidden');
+    }
+  });
+</script>

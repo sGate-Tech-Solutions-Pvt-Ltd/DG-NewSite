@@ -1,0 +1,29 @@
+diff --git a/node_modules/@withstudiocms/internal_helpers/dist/pathGenerators.js b/node_modules/@withstudiocms/internal_helpers/dist/pathGenerators.js
+index 484557d..2c8d8d5 100644
+--- a/node_modules/@withstudiocms/internal_helpers/dist/pathGenerators.js
++++ b/node_modules/@withstudiocms/internal_helpers/dist/pathGenerators.js
+@@ -1,7 +1,10 @@
+ function pathWithBase(path) {
+   let newPath = path;
+   newPath = stripLeadingSlash(newPath);
+-  return newPath ? `/${newPath}` : "/";
++  const rawBase = typeof import.meta !== "undefined" && import.meta.env && import.meta.env.BASE_URL || "/";
++  const base = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
++  if (!newPath) return base || "/";
++  return `${base}/${newPath}`;
+ }
+ function fileWithBase(path) {
+   let newPath = path;
+diff --git a/node_modules/@withstudiocms/internal_helpers/dist/pathResolver.js b/node_modules/@withstudiocms/internal_helpers/dist/pathResolver.js
+index 2dd1380..879a18e 100644
+--- a/node_modules/@withstudiocms/internal_helpers/dist/pathResolver.js
++++ b/node_modules/@withstudiocms/internal_helpers/dist/pathResolver.js
+@@ -15,7 +15,7 @@ function createPathResolver(baseOption) {
+      * @param segments - Path segments to resolve.
+      * @returns The resolved absolute filesystem path.
+      */
+-    resolve: (...segments) => path.resolve(baseDir, ...segments),
++    resolve: (...segments) => path.resolve(baseDir, ...segments).split(path.sep).join("/"),
+     /**
+      * Resolve path segments against the base directory and return a file URL.
+      *

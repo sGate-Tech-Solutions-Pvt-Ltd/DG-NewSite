@@ -1,0 +1,79 @@
+---
+/**
+ * VideoModal.astro
+ * Global YouTube embed modal. Activated by any element with
+ * [data-video="<youtube-id>"] on the page.
+ * Pure client-side island — no server data needed.
+ */
+---
+
+<div
+  class="video-modal"
+  id="videoModal"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Video player"
+  aria-hidden="true"
+>
+  <div class="video-modal-content">
+    <button
+      class="video-modal-close"
+      id="videoModalClose"
+      aria-label="Close video"
+    >
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
+    <iframe
+      id="videoIframe"
+      src=""
+      title="YouTube video player"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </div>
+</div>
+
+<script>
+  const modal  = document.getElementById('videoModal')!;
+  const iframe = document.getElementById('videoIframe') as HTMLIFrameElement;
+  const closeBtn = document.getElementById('videoModalClose')!;
+
+  function openModal(videoId: string) {
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    iframe.src = '';
+    document.body.style.overflow = '';
+  }
+
+  // Wire up every card with a data-video attribute
+  document.querySelectorAll<HTMLElement>('[data-video]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.video;
+      if (id) openModal(id);
+    });
+    // Keyboard accessibility
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const id = card.dataset.video;
+        if (id) openModal(id);
+      }
+    });
+  });
+
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+  });
+</script>

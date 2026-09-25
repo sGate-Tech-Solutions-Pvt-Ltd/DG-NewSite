@@ -1,0 +1,110 @@
+diff --git a/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js b/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js
+index 6b6aafa..11f8305 100644
+--- a/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js
++++ b/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js
+@@ -8,6 +8,7 @@ class MysqlEnvConfig {
+   user;
+   password;
+   connectionLimit = 10;
++  ssl = false;
+   constructor(opts) {
+     this.database = opts.database;
+     this.host = opts.host;
+@@ -17,6 +18,9 @@ class MysqlEnvConfig {
+     if (opts.connectionLimit !== void 0) {
+       this.connectionLimit = opts.connectionLimit;
+     }
++    if (opts.ssl !== void 0) {
++      this.ssl = opts.ssl;
++    }
+   }
+   get poolConfig() {
+     return {
+@@ -25,7 +29,8 @@ class MysqlEnvConfig {
+       port: Redacted.value(this.port),
+       user: Redacted.value(this.user),
+       password: Redacted.value(this.password),
+-      connectionLimit: this.connectionLimit
++      connectionLimit: this.connectionLimit,
++      ...this.ssl ? { ssl: { minVersion: "TLSv1.2", rejectUnauthorized: true } } : {}
+     };
+   }
+ }
+@@ -46,6 +51,12 @@ const envConfig = Config.all({
+       Config.orElse(() => Config.number("CMS_MYSQL_CONNECTION_LIMIT"))
+     ),
+     void 0
++  ),
++  ssl: Config.withDefault(
++    Config.boolean("MYSQL_SSL").pipe(
++      Config.orElse(() => Config.boolean("CMS_MYSQL_SSL"))
++    ),
++    false
+   )
+ }).pipe(Config.map((opts) => new MysqlEnvConfig(opts).poolConfig));
+ const mysqlDriver = Effect.gen(function* () {
+diff --git a/node_modules/@withstudiocms/kysely/dist/utils/migrator.js b/node_modules/@withstudiocms/kysely/dist/utils/migrator.js
+index f17bdb9..16afa09 100644
+--- a/node_modules/@withstudiocms/kysely/dist/utils/migrator.js
++++ b/node_modules/@withstudiocms/kysely/dist/utils/migrator.js
+@@ -103,7 +103,9 @@ const schemaManager = Effect.fn("schemaManager")(function* (db, previousSchemaDe
+         return yield* Effect.tryPromise({
+           try: () => db.insertInto(v1TableName).values({ definition, id }).executeTakeFirstOrThrow(),
+           catch: (cause) => {
+-            if (cause instanceof Error && "code" in cause && cause.code === "23505") {
++            const code = cause instanceof Error && "code" in cause ? cause.code : void 0;
++            const isDuplicateKey = code === "23505" || code === "ER_DUP_ENTRY" || typeof code === "string" && code.startsWith("SQLITE_CONSTRAINT");
++            if (isDuplicateKey) {
+               return new SaveError({ cause });
+             }
+             return new SqlError({ cause });
+diff --git a/node_modules/@withstudiocms/kysely/dist/utils/tables.js b/node_modules/@withstudiocms/kysely/dist/utils/tables.js
+index c916456..621fca1 100644
+--- a/node_modules/@withstudiocms/kysely/dist/utils/tables.js
++++ b/node_modules/@withstudiocms/kysely/dist/utils/tables.js
+@@ -3,6 +3,12 @@ import { sql } from "kysely";
+ import { SqlError } from "./errors.js";
+ import { createIndexes } from "./indexes.js";
+ import { getDialectRaw } from "./introspection.js";
++function resolveColumnType(dialect, def) {
++  if (dialect === "mysql" && def.type === "text" && (def.primaryKey || def.unique || def.references)) {
++    return "varchar(191)";
++  }
++  return def.type;
++}
+ function applyColumnConstraints(col, def, db, isAlterTable = false) {
+   const dialect = getDialectRaw(db);
+   if (def.primaryKey) col = col.primaryKey();
+@@ -35,13 +41,14 @@ function applyColumnConstraints(col, def, db, isAlterTable = false) {
+ }
+ const createTable = Effect.fn(function* (db, tableDef) {
+   yield* Effect.logDebug(`Creating table ${tableDef.name}...`);
++  const dialect = getDialectRaw(db);
+   let tableBuilder = db.schema.createTable(tableDef.name);
+   yield* Effect.forEach(
+     tableDef.columns,
+     Effect.fn(function* (colDef) {
+       tableBuilder = tableBuilder.addColumn(
+         colDef.name,
+-        colDef.type,
++        resolveColumnType(dialect, colDef),
+         (col) => applyColumnConstraints(col, colDef, db)
+       );
+     })
+@@ -55,6 +62,7 @@ const createTable = Effect.fn(function* (db, tableDef) {
+ });
+ const addMissingColumns = Effect.fn(function* (db, tableDef, existingColumns) {
+   yield* Effect.logDebug(`${tableDef.name} exists, checking for missing columns...`);
++  const dialect = getDialectRaw(db);
+   let addedCount = 0;
+   yield* Effect.forEach(
+     tableDef.columns,
+@@ -64,7 +72,7 @@ const addMissingColumns = Effect.fn(function* (db, tableDef, existingColumns) {
+       yield* Effect.tryPromise({
+         try: () => db.schema.alterTable(tableDef.name).addColumn(
+           colDef.name,
+-          colDef.type,
++          resolveColumnType(dialect, colDef),
+           (col) => applyColumnConstraints(col, colDef, db, true)
+         ).execute(),
+         catch: (cause) => new SqlError({ cause })

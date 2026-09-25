@@ -1,0 +1,55 @@
+---
+import { getPool } from '../../../../src/lib/db.ts';
+import { withBase } from '../../../../src/lib/withBase.ts';
+
+const [rows] = await getPool().query(
+  'SELECT * FROM contact_submissions ORDER BY submittedAt DESC'
+);
+---
+<style>
+  .submissions-table { width: 100%; border-collapse: collapse; }
+  .submissions-table th, .submissions-table td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+    vertical-align: top;
+  }
+  .unread { font-weight: 600; }
+  .empty { padding: 1rem; opacity: 0.7; }
+</style>
+
+{rows.length === 0 && <p class="empty">No contact form submissions yet.</p>}
+
+{rows.length > 0 && (
+  <table class="submissions-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Subject</th>
+        <th>Message</th>
+        <th>Source</th>
+        <th>Received</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr class={r.read ? '' : 'unread'}>
+          <td>{r.fullName}</td>
+          <td>{r.email}</td>
+          <td>{r.subject}</td>
+          <td>{r.message}</td>
+          <td>{r.sourcePage || '—'}</td>
+          <td>{new Date(r.submittedAt).toLocaleString()}</td>
+          <td>
+            <form method="POST" action={withBase('/api/contact-mark-read')}>
+              <input type="hidden" name="id" value={r.id} />
+              <button type="submit">{r.read ? 'Read' : 'Mark read'}</button>
+            </form>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}

@@ -1,0 +1,74 @@
+---
+/**
+ * PartnersCarousel.astro
+ * Scrolling partner card carousel with prev/next controls.
+ * Partners data is passed as props from the parent page (fed by StudioCMS).
+ */
+
+export interface Partner {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;       // FontAwesome class e.g. 'fa-dna'
+  discount?: string;  // e.g. '10% Off - Code: DYLAN'
+  href?: string;
+}
+
+export interface Props {
+  partners: Partner[];
+}
+
+const { partners } = Astro.props;
+---
+
+<div class="carousel-wrap" aria-label="Partner carousel">
+  <div class="carousel-track" id="carouselTrack" role="list">
+    {partners.map((p) => (
+      <div class="carousel-card" role="listitem">
+        <div class="card-icon" aria-hidden="true">
+          <i class={`fas ${p.icon}`}></i>
+        </div>
+        <h3>{p.name}</h3>
+        <p>{p.description}</p>
+        {p.discount && <span class="discount-tag">{p.discount}</span>}
+      </div>
+    ))}
+  </div>
+</div>
+
+<div class="carousel-nav" aria-label="Carousel navigation">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous partners">
+    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+  </button>
+  <button class="nav-btn" id="nextBtn" aria-label="Next partners">
+    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+  </button>
+</div>
+
+<script>
+  const track   = document.getElementById('carouselTrack')!;
+  const prevBtn = document.getElementById('prevBtn')!;
+  const nextBtn = document.getElementById('nextBtn')!;
+
+  const CARD_WIDTH = 285; // card width + gap
+  let slide = 0;
+
+  function visibleCount() {
+    return Math.floor(track.parentElement!.offsetWidth / CARD_WIDTH);
+  }
+
+  nextBtn.addEventListener('click', () => {
+    const max = track.children.length - visibleCount();
+    if (slide < max) {
+      slide++;
+      track.style.transform = `translateX(-${slide * CARD_WIDTH}px)`;
+    }
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (slide > 0) {
+      slide--;
+      track.style.transform = `translateX(-${slide * CARD_WIDTH}px)`;
+    }
+  });
+</script>

@@ -1,0 +1,40 @@
+# Local Netlify folder
+.netlify
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.*.example
+
+# Local database files
+local.db
+*.db-journal
+
+# OS / editor files
+.DS_Store
+
+# Contains live credentials — reference doc only, never commit
+DEPLOYMENT.md
+
+# Jetro MCP config / local tool state — contains a live JWT for this machine's session
+.mcp.json
+.cursor/mcp.json
+.jetro/
+
+# Despite the ".example" name, this contains real DB credentials
+deploy/.env.production.example
+
+# Full production DB dump — user password hashes, sessions, contact PII
+deploy/dylan_gemelli_export.sql
+
+# Deploy artifacts / internal working docs — not part of source
+dg-cpanel-deploy.zip
+Backend-Frontend-Mapping.xlsx
+STUDIOCMS_MAPPINGS.md

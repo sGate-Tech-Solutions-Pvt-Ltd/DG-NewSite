@@ -1,0 +1,214 @@
+---
+/**
+ * src/pages/podcast.astro
+ * Backend-managed via the site-content StudioCMS plugin.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContactForm from '../components/ContactForm.astro';
+import { getSiteConfig } from '../lib/content';
+import { withBase } from '../lib/withBase';
+
+const site = await getSiteConfig();
+---
+
+<BaseLayout
+  title="Podcast — Dylan Gemelli"
+  description="The Dylan Gemelli Podcast — #1 in Health & Fitness on Apple. 50K+ daily downloads."
+  solidNav
+>
+  <!-- ═══ PAGE HERO ═══════════════════════════════════════════════════════ -->
+  <section class="page-hero podcastHero"  aria-label="Podcast hero">
+    <div
+      class="page-hero-bg"
+      style={`background-image: url('${site.podcastHeroImage || withBase('/images/podcast_banner.jpg')}');`}
+      role="img"
+      aria-label="Podcast hero background"
+    ></div>
+    <div class="page-hero-overlay" aria-hidden="true"></div>
+  <div class="podcastbanner">
+    <div class="container">
+     <div class="row">
+    <div class="page-hero-content">
+      <h1 class="page-title  wow slideInDown">
+        {site.podcastHeroTitle || 'The Dylan Gemelli Podcast'}
+      </h1>
+      <p class="pageherosubtitle  wow slideInUp">
+        {(site.podcastHeroSubtitle || "Rated #1 in Health and Fitness and Alternative Health on Apple and a consistent top 10 Trending Podcast on Spotify.")
+          .split(/\r\n|\r|\n/)
+          .map((line, i, lines) => (
+            <Fragment key={i}>
+              {line}
+              {i < lines.length - 1 && <br />}
+            </Fragment>
+          ))}
+      </p>
+    </div>
+   </div>
+  </div>
+   </div>
+  </section>
+
+  <!-- ═══ STATS BAR ══════════════════════════════════════════════════════ -->
+  <section class="podcast-stats-bar" aria-label="Podcast statistics">
+
+    <div class="container">
+        <div class="row">
+
+ <div class="podcastlogosmain">
+
+      <div class="podcastlogos  wow slideInDown">
+        <figure> <img src="images/health_fitness.png" /> </figure>
+        <div class="podcastbottomm">
+          <div class="pstatnum">{site.podcastRankApple || '#1'}</div>
+              <aside>
+               <p>{site.podcastRankAppleLabel || 'Health and fitness and alternative health'}</p>
+
+           </aside>
+        </div>
+      </div>
+
+
+
+   <div class="podcastlogos spotifylogo  wow slideInDown">
+        <figure> <img src="images/spotify.png" /> </figure>
+        <div class="podcastbottomm">
+          <div class="pstatnum">{site.podcastRankSpotify || '10'}</div>
+              <aside>
+               <p>{site.podcastRankSpotifyLabel || 'Top 10 and Trending'}</p>
+
+           </aside>
+        </div>
+      </div>
+
+
+
+
+   <div class="podcastlogos downloadlogo  wow slideInDown">
+        <figure> <img src="images/download.png" /> </figure>
+        <div class="podcastbottomm">
+          <div class="pstatnum">{site.podcastDownloads || 'T50K'}</div>
+              <aside>
+               <p>{site.podcastDownloadsLabel || 'Downloads Daily'}</p>
+
+           </aside>
+        </div>
+      </div>
+
+
+
+
+
+
+
+
+ </div>
+
+
+
+    </div>
+      </div>
+  </section>
+
+  <!-- Apple Podcasts CTA -->
+  <div class="applypodcast">
+  <div style="text-align:center; padding:30px 20px; background:var(--black);" >
+    <a
+      href="https://podcasts.apple.com/us/podcast/the-dylan-gemelli-podcast/id1780873400"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="listen-badge"
+    >
+      <i class="fas fa-podcast" style="font-size:1.5rem;color:var(--yellow);" aria-hidden="true"></i>
+      Listen on Apple Podcasts
+    </a>
+  </div>
+  </div>
+
+   
+
+  <!-- ═══ EPISODES LIST ══════════════════════════════════════════════════ -->
+  {site.podcastEmbedIframe && (
+    <section class="episodes-section" aria-label="Latest episodes">
+      <div class="episodes-wrap">
+        <div class="episodheader  wow slideInDown">
+          <figure> <img src="images/podcast.png" /> </figure>
+        </div>
+        <div class="podcast-embed-wrap wow slideInUp">
+          <Fragment set:html={site.podcastEmbedIframe} />
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ═══ GUEST INQUIRY FORM ══════════════════════════════════════════════ -->
+  <ContactForm
+    heading={site.podcastGuestFormHeading || 'Interested in Being a Guest?'}
+    submitLabel="Apply Now"
+    imageSrc={site.podcastGuestImage || withBase('/images/page3_img4.jpeg')}
+    imageAlt="Dylan Gemelli recording a podcast"
+    successMessage="Thank you for your interest! We will review your application."
+    sourcePage="podcast-guest"
+  />
+</BaseLayout>
+
+<style>
+  /* Podcast Embed: wraps whatever iframe HTML an admin pastes (Apple
+     Podcasts, Spotify, YouTube, Buzzsprout, Libsyn, RSS.com, etc.) inside
+     the same rounded container the fallback Latest Episodes list uses, so
+     switching providers never requires a design/code change. */
+  .podcast-embed-wrap {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 50px;
+    padding: 40px;
+    box-sizing: border-box;
+  }
+
+  .podcast-embed-wrap :global(iframe) {
+    width: 100%;
+    max-width: 100%;
+    border: none;
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .podcast-embed-wrap {
+      padding: 20px;
+      border-radius: 24px;
+    }
+  }
+
+  .page-hero-subtitle {
+    font-family: 'Libre Franklin', sans-serif;
+    color: #ccc;
+    font-size: 1rem;
+    max-width: 700px;
+    margin: 20px auto 0;
+    line-height: 1.7;
+  }
+
+  .listen-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--black);
+    color: var(--white);
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    border: 2px solid #333;
+    transition: all 0.3s;
+    font-family: 'Libre Franklin', sans-serif;
+  }
+
+  .listen-badge:hover {
+    border-color: var(--yellow);
+    color: var(--yellow);
+  }
+
+  .ep-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+</style>
