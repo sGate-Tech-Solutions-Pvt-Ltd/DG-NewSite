@@ -185,10 +185,18 @@ index c969ff8..d4faa8f 100644
  const isActive = Astro.url.pathname === href && 'active';
  ---
 diff --git a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
-index 6c233a7..b88ecc6 100644
+index 6c233a7..a68c2c5 100644
 --- a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
 +++ b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
-@@ -602,7 +602,7 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
+@@ -130,7 +130,6 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
+                 <Input
+                   label={t("input-page-description")}
+                   name="page-description"
+-                  isRequired
+                   defaultValue={pageData.description}
+                 />
+                 <Select
+@@ -602,7 +601,7 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
            pluginFields,
          };
        }),

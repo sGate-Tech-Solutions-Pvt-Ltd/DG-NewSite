@@ -9,6 +9,7 @@ export const createTableSQL = `
   CREATE TABLE IF NOT EXISTS plugin_testimonials (
     pageId varchar(191) NOT NULL PRIMARY KEY,
     authorTitle text NOT NULL,
+    authorDesignation text,
     initials text NOT NULL,
     quote text NOT NULL,
     avatar text,
@@ -17,8 +18,11 @@ export const createTableSQL = `
   )
 `;
 
+export const addedColumns = [{ name: 'authorDesignation', ddl: 'text' }];
+
 export const fields = [
-  { input: 'input', name: 'authorTitle', label: "Author's title/role", type: 'text', required: true },
+  { input: 'input', name: 'authorTitle', label: 'Page Title', type: 'text', required: true },
+  { input: 'input', name: 'authorDesignation', label: "Author's designation/role (e.g. \"Co-founder of Renaissance Periodization\")", type: 'text' },
   { input: 'input', name: 'initials', label: 'Initials (max 3 chars)', type: 'text', required: true },
   { input: 'textarea', name: 'quote', label: 'Quote', required: true },
   { input: 'input', name: 'avatar', label: 'Avatar image path', type: 'text' },
@@ -28,6 +32,7 @@ export const fields = [
 
 export const defaultsRow = {
   authorTitle: '',
+  authorDesignation: '',
   initials: '',
   quote: '',
   avatar: null,
@@ -38,6 +43,7 @@ export const defaultsRow = {
 export function toRow(pluginFields) {
   return {
     authorTitle: textValue(pluginFields.authorTitle, ''),
+    authorDesignation: textValue(pluginFields.authorDesignation, ''),
     initials: textValue(pluginFields.initials, '').slice(0, 3),
     quote: textValue(pluginFields.quote, ''),
     avatar: textValue(pluginFields.avatar),

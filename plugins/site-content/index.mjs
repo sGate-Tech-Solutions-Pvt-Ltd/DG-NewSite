@@ -39,6 +39,7 @@ async function ensureTables() {
   const pool = getPool();
   for (const contentType of contentTypes) {
     await pool.query(contentType.createTableSQL);
+    await ensureColumns(pool, contentType.tableName, contentType.addedColumns);
   }
   await pool.query(siteConfig.createTableSQL);
   await ensureColumns(pool, siteConfig.tableName, siteConfig.addedColumns);

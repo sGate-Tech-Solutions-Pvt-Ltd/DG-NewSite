@@ -342,18 +342,46 @@ const youtubeHeadingRest = youtubeHeadingWords.join(' ');
         <h2>{site.testimonialsHeroTitle || 'Testimonials'}</h2>
       </div>
 
-      <div class="testimonials-grid">
+      <div class="TestimonialsMianfirst">
         {featuredTestimonials.map((t) => (
-          <article class="t-card wow slideInDown">
-            <p class="t-quote">"{t.quote}"</p>
-            <div class="t-author">
-              <div class="t-avatar" aria-hidden="true">{t.initials}</div>
-              <div class="t-info">
-                <h4>{t.authorName}</h4>
-                <p>{t.authorTitle}</p>
+          <div class="TestimonialsMian wow slideInUp">
+            <div class="TestimonialsInner">
+              <div class="Testimonialscontainer">
+                <div class="Testimonialsleft">
+                  <div class="testiPhoto">
+                    <figure>
+                      <img src={t.avatar || '../images/photoimghover.png'} alt={t.authorName} />
+                    </figure>
+                    <i class="testiHover">
+                      <img src="../images/photoimghover.png" alt="" />
+                    </i>
+                  </div>
+                </div>
+
+                <div class="TestimonialsRight">
+                  <div class="testiContent">
+                    <i class="quoteTesti">
+                      <img src="../images/quote.png" alt="" />
+                    </i>
+
+                    {t.authorTitle && <h3>{t.authorTitle}</h3>}
+
+                    <span class="lineTesti"></span>
+
+                    <p>{t.quote}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="testiname">
+                <i class="rippleCircle"></i>
+                <div class="testiNameText">
+                  <strong>{t.authorName}</strong>
+                  {t.authorDesignation && <span class="testiDesignation">{t.authorDesignation}</span>}
+                </div>
               </div>
             </div>
-          </article>
+          </div>
         ))}
       </div>
 

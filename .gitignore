@@ -25,8 +25,15 @@ DEPLOYMENT.md
 
 # Jetro MCP config / local tool state — contains a live JWT for this machine's session
 .mcp.json
-.cursor/mcp.json
 .jetro/
+
+# AI coding tool config — auto-generated per-session, not project source
+.agents/
+.cursor/
+.windsurfrules
+AGENT.md
+CLAUDE.md
+.github/copilot-instructions.md
 
 # Despite the ".example" name, this contains real DB credentials
 deploy/.env.production.example
@@ -36,5 +43,13 @@ deploy/dylan_gemelli_export.sql
 
 # Deploy artifacts / internal working docs — not part of source
 dg-cpanel-deploy.zip
+dg-*-deploy*.zip
 Backend-Frontend-Mapping.xlsx
 STUDIOCMS_MAPPINGS.md
+
+# DB dump — contains live data
+admin_dg_dump.sql
+
+# Scratch notes / build tmp
+connection-fix-status.txt
+tmp/

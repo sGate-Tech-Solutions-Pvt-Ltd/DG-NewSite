@@ -175,7 +175,7 @@ const youtubeHeadingRest = youtubeHeadingWords.join(' ');
         <i class="fas fa-play " aria-hidden="true"></i> Listen Now
       </a>
     </div>
-  </section> 
+  </section>
 
   <!-- ═══ ABOUT PREVIEW ══════════════════════════════════════════════════ -->
   <section class="about-home" id="about" aria-label="About Dylan">
@@ -383,7 +383,11 @@ const youtubeHeadingRest = youtubeHeadingWords.join(' ');
         </div>
 
         <div class="testiname">
-          <i class="rippleCircle"></i> <strong>{t.authorName}</strong>{t.authorTitle && ` - ${t.authorTitle}`}
+          <i class="rippleCircle"></i>
+          <div class="testiNameText">
+            <strong>{t.authorName}</strong>
+            {t.authorDesignation && <span class="testiDesignation">{t.authorDesignation}</span>}
+          </div>
         </div>
       </div>
     </div>

@@ -780,7 +780,8 @@ background: rgba(0, 0, 0, 0.35);
   z-index: 2;
 }
 
-.containerwrap {
+.containerwrap,
+.testimonials-wrap {
   position: relative;
   z-index: 3;
   max-width: 1260px;
@@ -1944,7 +1945,7 @@ font-weight: 800;
 .testiHover {
     position: absolute;
     bottom: 7px;
-    right: -13px;
+    right: -7px;
     opacity: 0;
 }
 
@@ -1997,6 +1998,18 @@ display: none;
 	font-weight: 600;
 	font-size: 13px;
 	color: #ababab;
+}
+
+.testiNameText {
+	display: flex;
+	flex-direction: column;
+}
+
+.testiDesignation {
+	display: inline-block;
+	margin: 0;
+	font-size: 14px;
+	color: #7a7a7a;
 }
 
 .Testishape {

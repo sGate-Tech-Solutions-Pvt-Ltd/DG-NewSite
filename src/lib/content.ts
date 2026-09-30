@@ -32,6 +32,7 @@ export async function getPartners(): Promise<Partner[]> {
 export interface Testimonial {
   authorName: string;
   authorTitle: string;
+  authorDesignation: string | null;
   initials: string;
   quote: string;
   avatar: string | null;
@@ -41,7 +42,7 @@ export interface Testimonial {
 
 export async function getTestimonials(): Promise<Testimonial[]> {
   const [rows] = await getPool().query(
-    `SELECT p.title AS authorName, pt.authorTitle, pt.initials, pt.quote, pt.avatar,
+    `SELECT p.title AS authorName, pt.authorTitle, pt.authorDesignation, pt.initials, pt.quote, pt.avatar,
             pt.featured, pt.\`order\` AS \`order\`
      FROM plugin_testimonials pt
      JOIN StudioCMSPageData p ON p.id = pt.pageId

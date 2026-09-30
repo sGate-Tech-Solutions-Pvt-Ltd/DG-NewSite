@@ -92,9 +92,9 @@ async function migrateTestimonials(pool) {
       draft: false,
     });
     await pool.query(
-      `INSERT INTO plugin_testimonials (pageId, authorTitle, initials, quote, avatar, featured, \`order\`)
-       VALUES (?,?,?,?,?,?,?)`,
-      [pageId, item.authorTitle, item.initials, item.quote, item.avatar ?? null,
+      `INSERT INTO plugin_testimonials (pageId, authorTitle, authorDesignation, initials, quote, avatar, featured, \`order\`)
+       VALUES (?,?,?,?,?,?,?,?)`,
+      [pageId, item.authorTitle, item.authorDesignation ?? null, item.initials, item.quote, item.avatar ?? null,
        item.featured ? 1 : 0, item.order ?? 99]
     );
   }

@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/stdocmsgt/public_html/dg-app/
+    - /usr/bin/rsync -rvz --exclude=".git" --exclude="node_modules" --exclude="dist" --exclude="tmp" --exclude=".env" --exclude="deploy/.env.production.example" $PWD/ $DEPLOYPATH
+    - cd $DEPLOYPATH && npm install
+    - cd $DEPLOYPATH && npm run build:lowmem
+    - /bin/touch $DEPLOYPATH/tmp/restart.txt
