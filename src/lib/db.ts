@@ -14,6 +14,10 @@ export function getPool(): mysql.Pool {
       password: process.env.CMS_MYSQL_PASSWORD,
       database: process.env.CMS_MYSQL_DATABASE,
       connectionLimit: 10,
+      // mysql2 JIT-compiles row parsers via `new Function(...)` by default;
+      // Cloudflare Workers disallows dynamic code generation, so this must be
+      // disabled to run there.
+      disableEval: true,
       ...(process.env.CMS_MYSQL_SSL === 'true'
         ? { ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true } }
         : {}),

@@ -1,5 +1,5 @@
 diff --git a/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js b/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js
-index 6b6aafa..11f8305 100644
+index 6b6aafa..3914b7c 100644
 --- a/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js
 +++ b/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js
 @@ -8,6 +8,7 @@ class MysqlEnvConfig {
@@ -20,17 +20,22 @@ index 6b6aafa..11f8305 100644
    }
    get poolConfig() {
      return {
-@@ -25,7 +29,8 @@ class MysqlEnvConfig {
+@@ -25,7 +29,13 @@ class MysqlEnvConfig {
        port: Redacted.value(this.port),
        user: Redacted.value(this.user),
        password: Redacted.value(this.password),
 -      connectionLimit: this.connectionLimit
 +      connectionLimit: this.connectionLimit,
++      // mysql2 JIT-compiles row parsers via `new Function(...)` by default for
++      // performance; Cloudflare Workers disallows dynamic code generation, so
++      // this must be disabled to run there (see Cloudflare's Hyperdrive + mysql2
++      // docs, which set this same option).
++      disableEval: true,
 +      ...this.ssl ? { ssl: { minVersion: "TLSv1.2", rejectUnauthorized: true } } : {}
      };
    }
  }
-@@ -46,6 +51,12 @@ const envConfig = Config.all({
+@@ -46,6 +56,12 @@ const envConfig = Config.all({
        Config.orElse(() => Config.number("CMS_MYSQL_CONNECTION_LIMIT"))
      ),
      void 0
