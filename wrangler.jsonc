@@ -20,4 +20,6 @@
   "hyperdrive": [
     { "binding": "HYPERDRIVE", "id": "d4b911e814894dd3ba7466902b53c46b" }
   ]
+  // trigger redeploy: pick up CMS_MYSQL_*/CMS_ENCRYPTION_KEY secrets saved in dashboard
 }
+
