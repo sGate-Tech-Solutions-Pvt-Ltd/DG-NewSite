@@ -15,8 +15,7 @@
     "directory": "dist"
   },
   "alias": {
-    "pg": "./stubs/pg.js",
-    "fdir": "./stubs/fdir.js"
+    "pg": "./stubs/pg.js"
   },
   "hyperdrive": [
     { "binding": "HYPERDRIVE", "id": "d4b911e814894dd3ba7466902b53c46b" }

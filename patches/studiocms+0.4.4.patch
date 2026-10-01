@@ -116,10 +116,30 @@ index fa966e2..76b4a63 100644
  // Filter out for draft pages
  const totalDraftPages = totalPages.filter((page) => page.draft === true);
 diff --git a/node_modules/studiocms/dist/handlers/pluginHandler.js b/node_modules/studiocms/dist/handlers/pluginHandler.js
-index 7b3b249..530efe2 100644
+index 7b3b249..dc41084 100644
 --- a/node_modules/studiocms/dist/handlers/pluginHandler.js
 +++ b/node_modules/studiocms/dist/handlers/pluginHandler.js
-@@ -749,7 +749,7 @@ const pluginHandler = defineUtility("astro:config:setup")(
+@@ -21,10 +21,17 @@ import {
+   StudioCMSPluginSchema,
+   StudioCMSStorageManagerSchema
+ } from "../schemas/index.js";
+-import { buildTranslations, loadJsTranslations } from "../utils/lang-helper.js";
++import { buildTranslations } from "../utils/lang-helper.js";
+ import { NoOpStorageManager } from "./storage-manager/no-op.js";
++import de from "./plugin-i18n/de.js";
++import en from "./plugin-i18n/en.js";
++import es from "./plugin-i18n/es.js";
++import fr from "./plugin-i18n/fr.js";
++import nl from "./plugin-i18n/nl.js";
++import no from "./plugin-i18n/no.js";
++import zh from "./plugin-i18n/zh.js";
+ const { resolve } = createPathResolver(import.meta.url);
+-const translations = await loadJsTranslations("./plugin-i18n", import.meta.url);
++const translations = { de, en, es, fr, nl, no, zh };
+ const t = await buildTranslations(translations);
+ const defaultPlugin = {
+   name: "Core (built-in)",
+@@ -749,7 +756,7 @@ const pluginHandler = defineUtility("astro:config:setup")(
                components.pageActionsComponent = pageActionsComponent;
              }
              const remappedComps = Object.entries(components).map(
@@ -128,7 +148,7 @@ index 7b3b249..530efe2 100644
              );
              return remappedComps.join("\n");
            }).join("\n") || ""
-@@ -767,7 +767,7 @@ const pluginHandler = defineUtility("astro:config:setup")(
+@@ -767,7 +774,7 @@ const pluginHandler = defineUtility("astro:config:setup")(
                components.pageActionsComponent = pageActionsComponent;
              }
              const remappedComps = Object.entries(components).map(
@@ -137,7 +157,7 @@ index 7b3b249..530efe2 100644
              );
              return remappedComps.join("\n");
            }).join("\n") || ""
-@@ -784,9 +784,9 @@ const pluginHandler = defineUtility("astro:config:setup")(
+@@ -784,9 +791,9 @@ const pluginHandler = defineUtility("astro:config:setup")(
  							const page = {
  								...item,
  								components: {
@@ -150,7 +170,7 @@ index 7b3b249..530efe2 100644
  								},
  							};
  
-@@ -808,9 +808,9 @@ const pluginHandler = defineUtility("astro:config:setup")(
+@@ -808,9 +815,9 @@ const pluginHandler = defineUtility("astro:config:setup")(
  							const page = {
  								...item,
  								components: {
@@ -474,6 +494,60 @@ index d2ba323..88bb586 100644
          if (!user) return false;
          const mailer = yield* getMailerStatus();
          const settings = yield* getSettings();
+diff --git a/node_modules/studiocms/dist/virtuals/i18n/v-files.js b/node_modules/studiocms/dist/virtuals/i18n/v-files.js
+index e6cb1e8..8527d98 100644
+--- a/node_modules/studiocms/dist/virtuals/i18n/v-files.js
++++ b/node_modules/studiocms/dist/virtuals/i18n/v-files.js
+@@ -1,46 +1,7 @@
+-import { posix } from "node:path";
+-import { fileURLToPath } from "node:url";
+-import { readJson } from "@withstudiocms/internal_helpers/utils";
+-import { glob } from "tinyglobby";
++import fr from "./translations/fr.json" with { type: "json" };
+ import { translationFlagKeyOverrides } from "./overrides.js";
+-const translationsDir = fileURLToPath(new URL("./translations/", import.meta.url));
+-const availableTranslationFiles = await glob("**/*.json", { cwd: translationsDir });
+-const availableTranslationFileKeys = availableTranslationFiles.map((file) => posix.normalize(file).replace(/\.json$/, "")).filter(Boolean);
+-function checkStrings(record) {
+-  if (typeof record !== "object" || record === null) return { count: 0, emptyStrings: 0 };
+-  let count = 0;
+-  let emptyStrings = 0;
+-  for (const value of Object.values(record)) {
+-    if (typeof value === "string") {
+-      count++;
+-      if (value.trim() === "") emptyStrings++;
+-    } else if (typeof value === "object" && value !== null) {
+-      const { count: c, emptyStrings: e } = checkStrings(value);
+-      count += c;
+-      emptyStrings += e;
+-    }
+-  }
+-  return { count, emptyStrings };
+-}
+-const MISSING_RATIO_THRESHOLD = 0.1;
+-function checkThreshold(opt) {
+-  const threshold = MISSING_RATIO_THRESHOLD;
+-  if (opt.count === 0) return false;
+-  return opt.emptyStrings / opt.count <= threshold;
+-}
+-const availableTranslations = (() => {
+-  const results = {};
+-  const translationKeys = availableTranslationFileKeys.filter((key) => key !== "en");
+-  for (const key of translationKeys) {
+-    const translation = readJson(`${translationsDir + key}.json`);
+-    const result = checkStrings(translation);
+-    if (!checkThreshold(result)) {
+-      continue;
+-    }
+-    results[key] = translation;
+-  }
+-  return results;
+-})();
++const availableTranslationFileKeys = ["de", "en", "es", "fr", "hi", "nl", "no", "zh"];
++const availableTranslations = { fr };
+ const availableTranslationsKeys = ["en", ...Object.keys(availableTranslations)];
+ const currentFlags = availableTranslationsKeys.map((key) => {
+   const flagKey = translationFlagKeyOverrides[key] || `lang-${key}`;
 diff --git a/node_modules/studiocms/dist/virtuals/mailer/index.js b/node_modules/studiocms/dist/virtuals/mailer/index.js
 index 0a7ee9e..02a9324 100644
 --- a/node_modules/studiocms/dist/virtuals/mailer/index.js
