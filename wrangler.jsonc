@@ -18,8 +18,6 @@
     "pg": "./stubs/pg.js"
   },
   "hyperdrive": [
-    // TODO: Replace "REPLACE_WITH_REAL_HYPERDRIVE_ID" with the real Hyperdrive config ID
-    // from the Cloudflare dashboard (Workers & Pages > Hyperdrive) before deploying.
-    { "binding": "HYPERDRIVE", "id": "REPLACE_WITH_REAL_HYPERDRIVE_ID" }
+    { "binding": "HYPERDRIVE", "id": "d4b911e814894dd3ba7466902b53c46b" }
   ]
 }
