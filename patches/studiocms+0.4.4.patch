@@ -1,14 +1,15 @@
 diff --git a/node_modules/studiocms/dist/client/apiClient.js b/node_modules/studiocms/dist/client/apiClient.js
-index 828f3e4..fd7ef2d 100644
+index 828f3e4..ee6f76a 100644
 --- a/node_modules/studiocms/dist/client/apiClient.js
 +++ b/node_modules/studiocms/dist/client/apiClient.js
-@@ -9,7 +9,8 @@ import {
+@@ -9,7 +9,9 @@ import {
  } from "@withstudiocms/api-spec";
  import { AuthAPIError } from "@withstudiocms/api-spec/auth";
  import * as Effect from "effect/Effect";
 -const baseUrl = site ?? "http://localhost:4321";
 +const base = import.meta.env.BASE_URL;
-+const baseUrl = (site ?? "http://localhost:4321").replace(/\/$/, "") + (base === "/" ? "" : base.replace(/\/$/, ""));
++const origin = typeof window !== "undefined" && window.location ? window.location.origin : site ?? "http://localhost:4321";
++const baseUrl = origin.replace(/\/$/, "") + (base === "/" ? "" : base.replace(/\/$/, ""));
  const makeClient = (api) => HttpApiClient.make(api, { baseUrl }).pipe(Effect.provide(FetchHttpClient.layer));
  const authClient = makeClient(StudioCMSAuthApi);
  const dashboardClient = makeClient(StudioCMSDashboardApiSpec);
