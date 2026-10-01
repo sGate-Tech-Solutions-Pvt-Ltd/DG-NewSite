@@ -15,7 +15,7 @@
  * here, since those are structural/design decisions, not editorial content.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SDKCoreJs, runSDK } from 'studiocms:sdk';
+import { getSDKCore, runSDK } from 'studiocms:sdk';
 import { StudioCMSRenderer } from 'studiocms:renderer';
 import { withBase } from '../lib/withBase';
 import { getSiteConfig } from '../lib/content';
@@ -99,6 +99,7 @@ const sectionConfig: AboutSection[] = [
 ];
 
 // Fetch each page's data + title from StudioCMS by slug.
+const SDKCoreJs = await getSDKCore();
 const sections = await Promise.all(
   sectionConfig.map(async (config) => {
     const pageData = await runSDK(SDKCoreJs.GET.page.bySlug(config.slug));

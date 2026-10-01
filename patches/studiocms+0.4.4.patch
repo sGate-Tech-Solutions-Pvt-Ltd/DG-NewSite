@@ -13,10 +13,14 @@ index 828f3e4..fd7ef2d 100644
  const authClient = makeClient(StudioCMSAuthApi);
  const dashboardClient = makeClient(StudioCMSDashboardApiSpec);
 diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro b/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
-index 8aa1776..0e409cc 100644
+index 8aa1776..1395986 100644
 --- a/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
 +++ b/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
-@@ -4,15 +4,13 @@ import { runSDK, SDKCoreJs } from 'studiocms:sdk';
+@@ -1,18 +1,17 @@
+ ---
+ import { FormattedDate } from 'studiocms:components';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
  import { Badge } from 'studiocms:ui/components/badge';
  import { Card } from 'studiocms:ui/components/card';
  import { Center } from 'studiocms:ui/components/center';
@@ -24,6 +28,7 @@ index 8aa1776..0e409cc 100644
 +import { sortByDate, withinLast30Days } from './utils.js';
  
  // Get all pages and users from the database
++const SDKCoreJs = await getSDKCore();
  const allPages = await runSDK(SDKCoreJs.GET.pages(true));
  
 -// Filter out the pages that are not allowed
@@ -35,11 +40,33 @@ index 8aa1776..0e409cc 100644
  
  const recentlyUpdatedPages = totalPages
  	.filter((page) => withinLast30Days(new Date(page.publishedAt)))
+diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Recently-signed-up.astro b/node_modules/studiocms/dist/handlers/plugin-components/Recently-signed-up.astro
+index 95ded67..544d272 100644
+--- a/node_modules/studiocms/dist/handlers/plugin-components/Recently-signed-up.astro
++++ b/node_modules/studiocms/dist/handlers/plugin-components/Recently-signed-up.astro
+@@ -1,11 +1,12 @@
+ ---
+ import config from 'studiocms:config';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Card } from 'studiocms:ui/components/card';
+ import { Icon } from 'studiocms:ui/components/icon';
+ import User from '#frontend/components/shared/SSRUser.astro';
+ import { sortByDate } from './utils.js';
+ 
++const SDKCoreJs = await getSDKCore();
+ const totalUsers = await runSDK(SDKCoreJs.GET.users.all());
+ 
+ const recentlyCreatedUsers = totalUsers
 diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro b/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro
-index 7f3ffb4..92f2f6b 100644
+index 7f3ffb4..f121983 100644
 --- a/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro
 +++ b/node_modules/studiocms/dist/handlers/plugin-components/Recently-updated-pages.astro
-@@ -4,15 +4,13 @@ import { runSDK, SDKCoreJs } from 'studiocms:sdk';
+@@ -1,18 +1,17 @@
+ ---
+ import { FormattedDate } from 'studiocms:components';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
  import { Badge } from 'studiocms:ui/components/badge';
  import { Card } from 'studiocms:ui/components/card';
  import { Center } from 'studiocms:ui/components/center';
@@ -47,6 +74,7 @@ index 7f3ffb4..92f2f6b 100644
 +import { sortByDate, withinLast30Days } from './utils.js';
  
  // Get all pages and users from the database
++const SDKCoreJs = await getSDKCore();
  const allPages = await runSDK(SDKCoreJs.GET.pages(true));
  
 -// Filter out the pages that are not allowed
@@ -59,15 +87,19 @@ index 7f3ffb4..92f2f6b 100644
  const recentlyUpdatedPages = totalPages
  	.filter((page) => withinLast30Days(page.updatedAt || page.publishedAt))
 diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro b/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro
-index fa966e2..9532fb3 100644
+index fa966e2..76b4a63 100644
 --- a/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro
 +++ b/node_modules/studiocms/dist/handlers/plugin-components/Totals.astro
-@@ -3,14 +3,16 @@ import { runSDK, SDKCoreJs } from 'studiocms:sdk';
+@@ -1,16 +1,19 @@
+ ---
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
  import { Card } from 'studiocms:ui/components/card';
  import { Icon } from 'studiocms:ui/components/icon';
  import { Effect } from '../../effect.js';
 -import { allowedIdentifiers } from './utils.js';
  
++const SDKCoreJs = await getSDKCore();
  const [allPages, totalUsers] = await runSDK(
  	Effect.all([SDKCoreJs.GET.pages(true), SDKCoreJs.GET.users.all()])
  );
@@ -130,6 +162,139 @@ index 7b3b249..530efe2 100644
  								},
  							};
  
+diff --git a/node_modules/studiocms/dist/handlers/storage-manager/core/astro-context.js b/node_modules/studiocms/dist/handlers/storage-manager/core/astro-context.js
+index fdf4da8..28e2909 100644
+--- a/node_modules/studiocms/dist/handlers/storage-manager/core/astro-context.js
++++ b/node_modules/studiocms/dist/handlers/storage-manager/core/astro-context.js
+@@ -1,4 +1,4 @@
+-import { runSDK, SDKCoreJs } from "studiocms:sdk";
++import { getSDKCore, runSDK } from "studiocms:sdk";
+ import { UserPermissionLevel } from "@withstudiocms/auth-kit/types";
+ class AstroContextDriver {
+   parseContext({ request, locals }) {
+@@ -18,6 +18,7 @@ class AstroContextDriver {
+               return false;
+             }
+             const token = parts[1];
++            const SDKCoreJs = await getSDKCore();
+             const user = await runSDK(SDKCoreJs.REST_API.tokens.verify(token));
+             if (!user) {
+               return false;
+diff --git a/node_modules/studiocms/dist/handlers/storage-manager/core/database.js b/node_modules/studiocms/dist/handlers/storage-manager/core/database.js
+index 7ebde4e..fd884ca 100644
+--- a/node_modules/studiocms/dist/handlers/storage-manager/core/database.js
++++ b/node_modules/studiocms/dist/handlers/storage-manager/core/database.js
+@@ -1,36 +1,47 @@
+-import { runSDK, SDKCoreJs } from "studiocms:sdk";
++import { getSDKCore, runSDK } from "studiocms:sdk";
+ import { StudioCMSStorageManagerUrlMappings } from "@withstudiocms/sdk/tables";
+ import { Schema } from "effect";
+-const { withCodec, withDecoder, withEncoder } = SDKCoreJs.dbService;
+-const getFromDb = withCodec({
+-  encoder: Schema.String,
+-  decoder: Schema.UndefinedOr(StudioCMSStorageManagerUrlMappings.Select),
+-  callbackFn: (query, input) => query(
+-    (db) => db.selectFrom("StudioCMSStorageManagerUrlMappings").where("identifier", "=", input).selectAll().executeTakeFirst()
+-  )
+-});
+-const setToDb = withEncoder({
+-  encoder: StudioCMSStorageManagerUrlMappings.Insert,
+-  callbackFn: (query, input) => query(
+-    (db) => db.insertInto("StudioCMSStorageManagerUrlMappings").values(input).onConflict((oc) => oc.column("identifier").doUpdateSet(input)).execute()
+-  )
+-});
+-const deleteFromDb = withEncoder({
+-  encoder: Schema.String,
+-  callbackFn: (query, input) => query(
+-    (db) => db.deleteFrom("StudioCMSStorageManagerUrlMappings").where("identifier", "=", input).execute()
+-  )
+-});
+-const getAllFromDb = withDecoder({
+-  decoder: Schema.Array(StudioCMSStorageManagerUrlMappings.Select),
+-  callbackFn: (query) => query((db) => db.selectFrom("StudioCMSStorageManagerUrlMappings").selectAll().execute())
+-});
++let _dbOpsPromise;
++const getDbOps = () => {
++  if (!_dbOpsPromise) {
++    _dbOpsPromise = getSDKCore().then((SDKCoreJs) => {
++      const { withCodec, withDecoder, withEncoder } = SDKCoreJs.dbService;
++      const getFromDb = withCodec({
++        encoder: Schema.String,
++        decoder: Schema.UndefinedOr(StudioCMSStorageManagerUrlMappings.Select),
++        callbackFn: (query, input) => query(
++          (db) => db.selectFrom("StudioCMSStorageManagerUrlMappings").where("identifier", "=", input).selectAll().executeTakeFirst()
++        )
++      });
++      const setToDb = withEncoder({
++        encoder: StudioCMSStorageManagerUrlMappings.Insert,
++        callbackFn: (query, input) => query(
++          (db) => db.insertInto("StudioCMSStorageManagerUrlMappings").values(input).onConflict((oc) => oc.column("identifier").doUpdateSet(input)).execute()
++        )
++      });
++      const deleteFromDb = withEncoder({
++        encoder: Schema.String,
++        callbackFn: (query, input) => query(
++          (db) => db.deleteFrom("StudioCMSStorageManagerUrlMappings").where("identifier", "=", input).execute()
++        )
++      });
++      const getAllFromDb = withDecoder({
++        decoder: Schema.Array(StudioCMSStorageManagerUrlMappings.Select),
++        callbackFn: (query) => query((db) => db.selectFrom("StudioCMSStorageManagerUrlMappings").selectAll().execute())
++      });
++      return { getFromDb, setToDb, deleteFromDb, getAllFromDb };
++    });
++  }
++  return _dbOpsPromise;
++};
+ class UrlMappingDatabase {
+   async get(identifier) {
++    const { getFromDb } = await getDbOps();
+     const result = await runSDK(getFromDb(identifier));
+     return result || null;
+   }
+   async set(mapping) {
++    const { setToDb } = await getDbOps();
+     await runSDK(
+       setToDb({
+         ...mapping,
+@@ -39,9 +50,11 @@ class UrlMappingDatabase {
+     );
+   }
+   async delete(identifier) {
++    const { deleteFromDb } = await getDbOps();
+     await runSDK(deleteFromDb(identifier));
+   }
+   async cleanup() {
++    const { deleteFromDb } = await getDbOps();
+     const now = Date.now();
+     let deletedCount = 0;
+     const allMappings = await this.getAll();
+@@ -54,6 +67,7 @@ class UrlMappingDatabase {
+     return deletedCount;
+   }
+   async getAll() {
++    const { getAllFromDb } = await getDbOps();
+     return await runSDK(getAllFromDb());
+   }
+ }
+diff --git a/node_modules/studiocms/dist/handlers/storage-manager/core/effectify-astro-context.js b/node_modules/studiocms/dist/handlers/storage-manager/core/effectify-astro-context.js
+index 77b1546..fb5c090 100644
+--- a/node_modules/studiocms/dist/handlers/storage-manager/core/effectify-astro-context.js
++++ b/node_modules/studiocms/dist/handlers/storage-manager/core/effectify-astro-context.js
+@@ -1,4 +1,4 @@
+-import { runSDK, SDKCoreJs } from "studiocms:sdk";
++import { getSDKCore, runSDK } from "studiocms:sdk";
+ import { HttpServerResponse } from "@effect/platform";
+ import { UserPermissionLevel } from "@withstudiocms/auth-kit/types";
+ class EffectifyAstroContextDriver {
+@@ -19,6 +19,7 @@ class EffectifyAstroContextDriver {
+               return false;
+             }
+             const token = parts[1];
++            const SDKCoreJs = await getSDKCore();
+             const user = await runSDK(SDKCoreJs.REST_API.tokens.verify(token));
+             if (!user) {
+               return false;
 diff --git a/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js b/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js
 index b4dd0ec..6946eb0 100644
 --- a/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js
@@ -171,6 +336,266 @@ index c7b817d..59f3826 100644
      );
      translations[alias] = translation.default;
    }
+diff --git a/node_modules/studiocms/dist/virtual.d.ts b/node_modules/studiocms/dist/virtual.d.ts
+index ac22ec1..660d4a3 100644
+--- a/node_modules/studiocms/dist/virtual.d.ts
++++ b/node_modules/studiocms/dist/virtual.d.ts
+@@ -383,16 +383,21 @@ declare module 'studiocms:sdk' {
+ 	export const SDKCore: Mod['SDKCore'];
+ 
+ 	/**
+-	 * VanillaJS Version of the SDKCore. Most internal functions will still contain Effects, you can use `runSDK` from the 'studiocms:sdk' to run these as normal async functions
++	 * Lazily builds (and memoizes) the VanillaJS version of the SDKCore. Replaces the old
++	 * eagerly-constructed `SDKCoreJs` export, which relied on a top-level await and could
++	 * never resolve request-scoped bindings (e.g. Cloudflare Hyperdrive). Most internal
++	 * functions will still contain Effects, you can use `runSDK` from 'studiocms:sdk' to run
++	 * these as normal async functions.
+ 	 *
+ 	 * @example
+ 	 * ```ts
+-	 * import { SDKCoreJs, runSDK } from 'studiocms:sdk';
++	 * import { getSDKCore, runSDK } from 'studiocms:sdk';
+ 	 *
+-	 * const pages = await runSDK(SDKCoreJs.GET.pages());
++	 * const sdk = await getSDKCore();
++	 * const pages = await runSDK(sdk.GET.pages());
+ 	 * ```
+ 	 */
+-	export const SDKCoreJs: Mod['SDKCoreJs'];
++	export const getSDKCore: Mod['getSDKCore'];
+ 
+ 	/**
+ 	 * Utility function for running components of the SDKCoreJs
+diff --git a/node_modules/studiocms/dist/virtuals/auth/core.js b/node_modules/studiocms/dist/virtuals/auth/core.js
+index 406a3d2..32f4409 100644
+--- a/node_modules/studiocms/dist/virtuals/auth/core.js
++++ b/node_modules/studiocms/dist/virtuals/auth/core.js
+@@ -1,6 +1,6 @@
+ import { CMS_ENCRYPTION_KEY } from "astro:env/server";
+ import { Notifications } from "studiocms:notifier";
+-import { SDKCoreJs as sdk } from "studiocms:sdk";
++import { getSDKCore } from "studiocms:sdk";
+ import { AuthKit } from "@withstudiocms/auth-kit";
+ import { AuthKitOptions } from "@withstudiocms/auth-kit/config";
+ import { AuthSessionCookieName } from "../../consts.js";
+@@ -15,20 +15,20 @@ const authKitConfig = AuthKitOptions.Live({
+     cookieName: AuthSessionCookieName,
+     expTime: 1e3 * 60 * 60 * 24 * 14,
+     sessionTools: {
+-      createSession: async ({ expiresAt, ...params }) => runEffect(sdk.AUTH.session.create({ expiresAt: expiresAt.toISOString(), ...params })),
+-      deleteSession: async (sessionId) => runEffect(sdk.AUTH.session.delete(sessionId)).then(() => void 0),
+-      sessionAndUserData: async (sessionId) => runEffect(sdk.AUTH.session.sessionWithUser(sessionId)),
+-      updateSession: async (sessionId, params) => runEffect(sdk.AUTH.session.update({ id: sessionId, newDate: params.expiresAt }))
++      createSession: async ({ expiresAt, ...params }) => runEffect((await getSDKCore()).AUTH.session.create({ expiresAt: expiresAt.toISOString(), ...params })),
++      deleteSession: async (sessionId) => runEffect((await getSDKCore()).AUTH.session.delete(sessionId)).then(() => void 0),
++      sessionAndUserData: async (sessionId) => runEffect((await getSDKCore()).AUTH.session.sessionWithUser(sessionId)),
++      updateSession: async (sessionId, params) => runEffect((await getSDKCore()).AUTH.session.update({ id: sessionId, newDate: params.expiresAt }))
+     }
+   },
+   userTools: {
+     idGenerator: () => crypto.randomUUID(),
+-    createLocalUser: async (params) => runEffect(sdk.AUTH.user.create(params, "visitor")),
+-    createOAuthUser: async (params) => runEffect(sdk.AUTH.oAuth.create(params)),
+-    getCurrentPermissions: async (userId) => runEffect(sdk.AUTH.permission.currentStatus(userId)),
+-    getUserById: async (id) => runEffect(sdk.GET.users.byId(id)),
+-    getUserByEmail: async (email) => runEffect(sdk.GET.users.byEmail(email)),
+-    updateLocalUser: async (userId, userData) => runEffect(sdk.AUTH.user.update({ userId, userData: { ...userData, createdAt: void 0 } })),
++    createLocalUser: async (params) => runEffect((await getSDKCore()).AUTH.user.create(params, "visitor")),
++    createOAuthUser: async (params) => runEffect((await getSDKCore()).AUTH.oAuth.create(params)),
++    getCurrentPermissions: async (userId) => runEffect((await getSDKCore()).AUTH.permission.currentStatus(userId)),
++    getUserById: async (id) => runEffect((await getSDKCore()).GET.users.byId(id)),
++    getUserByEmail: async (email) => runEffect((await getSDKCore()).GET.users.byEmail(email)),
++    updateLocalUser: async (userId, userData) => runEffect((await getSDKCore()).AUTH.user.update({ userId, userData: { ...userData, createdAt: void 0 } })),
+     notifier: {
+       admin: (type, message) => runEffect(notifyAdmin(type, message))
+     }
+diff --git a/node_modules/studiocms/dist/virtuals/auth/verify-email.js b/node_modules/studiocms/dist/virtuals/auth/verify-email.js
+index d2ba323..88bb586 100644
+--- a/node_modules/studiocms/dist/virtuals/auth/verify-email.js
++++ b/node_modules/studiocms/dist/virtuals/auth/verify-email.js
+@@ -1,7 +1,7 @@
+ import { site } from "astro:config/client";
+ import { StudioCMSRoutes } from "studiocms:lib";
+ import { Mailer } from "studiocms:mailer";
+-import { SDKCoreJs as sdk } from "studiocms:sdk";
++import { getSDKCore } from "studiocms:sdk";
+ import templateEngine from "studiocms:template-engine";
+ import { CMSNotificationSettingsId } from "../../consts.js";
+ import { Data, Effect, genLogger, pipeLogger } from "../../effect.js";
+@@ -16,6 +16,7 @@ class VerifyEmail extends Effect.Service()(
+         MailService.isEnabled
+       );
+       const getSettings = () => genLogger("studiocms/virtuals/auth/verify-email/VerifyEmail.getSettings")(function* () {
++        const sdk = yield* Effect.promise(() => getSDKCore());
+         const { data: settings } = yield* sdk.notificationSettings.site.get();
+         if (!settings) {
+           return {
+@@ -36,15 +37,22 @@ class VerifyEmail extends Effect.Service()(
+           return settings.emailVerification;
+         }
+       );
+-      const getEmailVerificationRequest = (id) => pipeLogger("studiocms/virtuals/auth/verify-email/VerifyEmail.getEmailVerificationRequest")(
+-        sdk.AUTH.verifyEmail.get(id)
++      const getEmailVerificationRequest = (id) => genLogger("studiocms/virtuals/auth/verify-email/VerifyEmail.getEmailVerificationRequest")(
++        function* () {
++          const sdk = yield* Effect.promise(() => getSDKCore());
++          return yield* sdk.AUTH.verifyEmail.get(id);
++        }
+       );
+-      const deleteEmailVerificationRequest = (id) => pipeLogger(
++      const deleteEmailVerificationRequest = (id) => genLogger(
+         "studiocms/virtuals/auth/verify-email/VerifyEmail.deleteEmailVerificationRequest"
+-      )(sdk.AUTH.verifyEmail.delete(id));
++      )(function* () {
++        const sdk = yield* Effect.promise(() => getSDKCore());
++        return yield* sdk.AUTH.verifyEmail.delete(id);
++      });
+       const createEmailVerificationRequest = (userId) => genLogger(
+         "studiocms/virtuals/auth/verify-email/VerifyEmail.createEmailVerificationRequest"
+       )(function* () {
++        const sdk = yield* Effect.promise(() => getSDKCore());
+         yield* deleteEmailVerificationRequest(userId);
+         return yield* sdk.AUTH.verifyEmail.create(userId);
+       });
+@@ -62,6 +70,7 @@ class VerifyEmail extends Effect.Service()(
+       );
+       const sendVerificationEmail = (userId, isOAuth = false) => genLogger("studiocms/virtuals/auth/verify-email/VerifyEmail.sendVerificationEmail")(
+         function* () {
++          const sdk = yield* Effect.promise(() => getSDKCore());
+           const mailer = yield* getMailerStatus();
+           const settings = yield* getSettings();
+           const user = yield* sdk.GET.users.byId(userId);
+@@ -106,6 +115,7 @@ class VerifyEmail extends Effect.Service()(
+         }
+       );
+       const isEmailVerified = (user) => genLogger("studiocms/virtuals/auth/verify-email/VerifyEmail.isEmailVerified")(function* () {
++        const sdk = yield* Effect.promise(() => getSDKCore());
+         if (!user) return false;
+         const mailer = yield* getMailerStatus();
+         const settings = yield* getSettings();
+diff --git a/node_modules/studiocms/dist/virtuals/mailer/index.js b/node_modules/studiocms/dist/virtuals/mailer/index.js
+index 0a7ee9e..02a9324 100644
+--- a/node_modules/studiocms/dist/virtuals/mailer/index.js
++++ b/node_modules/studiocms/dist/virtuals/mailer/index.js
+@@ -1,5 +1,5 @@
+ import { logger as _logger, isVerbose } from "studiocms:logger";
+-import { SDKCoreJs as sdk } from "studiocms:sdk";
++import { getSDKCore } from "studiocms:sdk";
+ import { Effect, genLogger, Layer, pipeLogger } from "../../effect.js";
+ import { SMTPMailer } from "../../utils/effects/smtp.js";
+ const forked = _logger.fork("studiocms:runtime/mailer");
+@@ -12,6 +12,7 @@ class Mailer extends Effect.Service()("studiocms/lib/mailer/Mailer", {
+   effect: genLogger("studiocms/lib/mailer/Mailer.effect")(function* () {
+     const logger = yield* Logger;
+     const SMTP = yield* SMTPMailer;
++    const sdk = yield* Effect.promise(() => getSDKCore());
+     const mailerResponse = (data) => {
+       if ("error" in data) {
+         logger.error(data.error);
+diff --git a/node_modules/studiocms/dist/virtuals/notifier/index.js b/node_modules/studiocms/dist/virtuals/notifier/index.js
+index d91ab62..7a9078a 100644
+--- a/node_modules/studiocms/dist/virtuals/notifier/index.js
++++ b/node_modules/studiocms/dist/virtuals/notifier/index.js
+@@ -1,6 +1,6 @@
+ import _logger from "studiocms:logger";
+ import { Mailer } from "studiocms:mailer";
+-import { SDKCoreJs as sdk } from "studiocms:sdk";
++import { getSDKCore } from "studiocms:sdk";
+ import templateEngine from "studiocms:template-engine";
+ import { Effect, genLogger } from "../../effect.js";
+ const userNotifications = {
+@@ -60,6 +60,7 @@ class Notifications extends Effect.Service()(
+       const MailService = yield* Mailer;
+       const logger = yield* makeLogger;
+       const getConfig = genLogger("studiocms/lib/notifier/Notifications.getConfig")(function* () {
++        const sdk = yield* Effect.promise(() => getSDKCore());
+         const data = yield* sdk.GET.siteConfig();
+         if (!data) {
+           return {
+@@ -70,6 +71,7 @@ class Notifications extends Effect.Service()(
+         return data.data;
+       });
+       const getUsersWithNotifications = (notification, userRanks2) => genLogger("studiocms/lib/notifier/Notifications.getUsersWithNotifications")(function* () {
++        const sdk = yield* Effect.promise(() => getSDKCore());
+         const userTable = yield* sdk.GET.users.all();
+         const users = userTable.filter(
+           (user) => user.permissionsData?.rank && userRanks2.includes(user.permissionsData?.rank)
+@@ -91,6 +93,7 @@ class Notifications extends Effect.Service()(
+         message,
+         notification
+       }) => genLogger("studiocms/lib/notifier/Notifications.sendMail")(function* () {
++        const sdk = yield* Effect.promise(() => getSDKCore());
+         const engine = yield* templateEngine;
+         const siteConfigFull = yield* sdk.GET.siteConfig();
+         const { title: siteTitle, description, siteIcon } = siteConfigFull.data;
+diff --git a/node_modules/studiocms/dist/virtuals/plugins/frontend-navigation.js b/node_modules/studiocms/dist/virtuals/plugins/frontend-navigation.js
+index ad1a2e9..a83758b 100644
+--- a/node_modules/studiocms/dist/virtuals/plugins/frontend-navigation.js
++++ b/node_modules/studiocms/dist/virtuals/plugins/frontend-navigation.js
+@@ -1,7 +1,8 @@
+ import { pathWithBase, StudioCMSRoutes } from "studiocms:lib";
+ import plugins from "studiocms:plugins";
+-import { runSDK, SDKCoreJs } from "studiocms:sdk";
++import { getSDKCore, runSDK } from "studiocms:sdk";
+ async function frontendNavigation(basePackage) {
++  const SDKCoreJs = await getSDKCore();
+   const searchPackage = basePackage || "studiocms/markdown";
+   const pageListData = await runSDK(SDKCoreJs.GET.pages());
+   const links = [];
+diff --git a/node_modules/studiocms/dist/virtuals/sdk/index.d.ts b/node_modules/studiocms/dist/virtuals/sdk/index.d.ts
+index 3a43ef4..7789cc2 100644
+--- a/node_modules/studiocms/dist/virtuals/sdk/index.d.ts
++++ b/node_modules/studiocms/dist/virtuals/sdk/index.d.ts
+@@ -166,15 +166,19 @@ export declare const buildSDKContext: (db: import("@withstudiocms/kysely/client"
+  */
+ export declare const SDKCore: SDKCoreLive;
+ /**
+- * Converts the `SDKCore` effect to a vanilla JavaScript object by removing the `_tag` property.
++ * Lazily builds (and memoizes) the StudioCMS SDK Core as a plain JavaScript object.
+  *
+  * @remarks
+- * This function uses `Effect.gen` to yield the `SDKCore` effect, destructures the result to exclude the `_tag` property,
+- * and then passes the remaining core properties to `runEffect`.
++ * Unlike `SDKCoreJs`, which was eagerly constructed at module load time via a
++ * top-level await, `getSDKCore` defers construction until it is first called —
++ * which matters in environments (such as Cloudflare Workers) where connection
++ * details are only available once a request has started. The underlying
++ * promise is cached, so subsequent calls on the same warm instance reuse it
++ * instead of rebuilding the database client.
+  *
+  * @returns A promise that resolves to the core properties of `SDKCore` as a plain JavaScript object.
+  */
+-export declare const SDKCoreJs: GetJs<SDKCoreLive>;
++export declare const getSDKCore: () => Promise<GetJs<SDKCoreLive>>;
+ /**
+  * Alias for `runEffect`, used to run SDK effects and convert them to plain JavaScript objects.
+  *
+diff --git a/node_modules/studiocms/dist/virtuals/sdk/index.js b/node_modules/studiocms/dist/virtuals/sdk/index.js
+index 30d9d26..506636a 100644
+--- a/node_modules/studiocms/dist/virtuals/sdk/index.js
++++ b/node_modules/studiocms/dist/virtuals/sdk/index.js
+@@ -44,13 +44,19 @@ const SDKCore = getDbClient(config.db.dialect).pipe(
+   Effect.flatMap(makeStudioCMSSDKCoreLive),
+   Effect.catchAll((cause) => new SDKInitializationError({ cause }))
+ );
+-const SDKCoreJs = await runEffect(SDKCore);
++let _sdkCorePromise;
++const getSDKCore = () => {
++  if (!_sdkCorePromise) {
++    _sdkCorePromise = runEffect(SDKCore);
++  }
++  return _sdkCorePromise;
++};
+ const runSDK = runEffect;
+ export {
+   DBClientInitializationError,
+   SDKCore,
+-  SDKCoreJs,
+   SDKInitializationError,
+   buildSDKContext,
++  getSDKCore,
+   runSDK
+ };
 diff --git a/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro b/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro
 index c969ff8..d4faa8f 100644
 --- a/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro
@@ -184,11 +609,65 @@ index c969ff8..d4faa8f 100644
  
  const isActive = Astro.url.pathname === href && 'active';
  ---
+diff --git a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreateFolder.astro b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreateFolder.astro
+index 2ba65d8..19bb2a3 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreateFolder.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreateFolder.astro
+@@ -1,9 +1,10 @@
+ ---
+ import { type UiLanguageKeys, useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Input } from 'studiocms:ui/components/input';
+ import { Select } from 'studiocms:ui/components/select';
+ 
++const SDKCoreJs = await getSDKCore();
+ const folderList = await runSDK(SDKCoreJs.GET.folderList());
+ 
+ const parentFolderOptions = [
+diff --git a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreatePage.astro b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreatePage.astro
+index ced890e..12e0c41 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreatePage.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/CreatePage.astro
+@@ -2,7 +2,7 @@
+ import { type UiLanguageKeys, useTranslations } from 'studiocms:i18n';
+ import pluginList from 'studiocms:plugins';
+ import { renderAugments } from 'studiocms:plugins/augments';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Card } from 'studiocms:ui/components/card';
+ import { Input } from 'studiocms:ui/components/input';
+ import { Select } from 'studiocms:ui/components/select';
+@@ -14,6 +14,7 @@ import { createSelectOptions, pageTypeOptions, trueFalse } from './shared.js';
+ 
+ const pluginFields = pluginList.flatMap(({ pageTypes }) => pageTypes ?? []);
+ 
++const SDKCoreJs = await getSDKCore();
+ const [folderList, categories, tags] = await runSDK(
+ 	Effect.all([
+ 		SDKCoreJs.GET.folderList(),
 diff --git a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
-index 6c233a7..a68c2c5 100644
+index 6c233a7..8255151 100644
 --- a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
 +++ b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/EditPage.astro
-@@ -130,7 +130,6 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
+@@ -4,7 +4,7 @@ import { type UiLanguageKeys, useTranslations } from 'studiocms:i18n';
+ import type { SettingsField } from 'studiocms:plugin-helpers';
+ import pluginList from 'studiocms:plugins';
+ import { renderAugments } from 'studiocms:plugins/augments';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import type {
+ 	CombinedPageData,
+ 	CombinedUserData,
+@@ -62,6 +62,7 @@ function getParentFolderValue(value: string | null | undefined): string | undefi
+ 	return options.find((option: { value: FormDataEntryValue }) => option.value === value)?.value;
+ }
+ 
++const SDKCoreJs = await getSDKCore();
+ const diffs = await runSDK(SDKCoreJs.diffTracking.get.byPageId.latest(pageData.id, 10));
+ 
+ const user = (id: string) => users.find((u) => u.id === id)?.name;
+@@ -130,7 +131,6 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
                  <Input
                    label={t("input-page-description")}
                    name="page-description"
@@ -196,7 +675,7 @@ index 6c233a7..a68c2c5 100644
                    defaultValue={pageData.description}
                  />
                  <Select
-@@ -602,7 +601,7 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
+@@ -602,7 +602,7 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-page');
            pluginFields,
          };
        }),
@@ -205,6 +684,128 @@ index 6c233a7..a68c2c5 100644
        Effect.flatMap((payload) =>
          dashboardClient.pipe(
            Effect.flatMap((client) =>
+diff --git a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/InnerSidebarElement.astro b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/InnerSidebarElement.astro
+index 151f8e9..d16c4f7 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/InnerSidebarElement.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/InnerSidebarElement.astro
+@@ -1,6 +1,6 @@
+ ---
+ import { type UiLanguageKeys, useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Button } from 'studiocms:ui/components/button';
+ import { Dropdown } from 'studiocms:ui/components/dropdown';
+ import { Icon } from 'studiocms:ui/components/icon';
+@@ -14,6 +14,7 @@ interface Props {
+ const { lang } = Astro.props;
+ const t = useTranslations(lang, '@studiocms/dashboard:content-sidebar');
+ 
++const SDKCoreJs = await getSDKCore();
+ const PageFolderTree = await runSDK(SDKCoreJs.GET.pageFolderTree());
+ ---
+ 
+diff --git a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/PageHeader.astro b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/PageHeader.astro
+index 92ed641..fed23bf 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/content-mgmt/PageHeader.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/content-mgmt/PageHeader.astro
+@@ -1,6 +1,6 @@
+ ---
+ import { type UiLanguageKeys, useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Button } from 'studiocms:ui/components/button';
+ import { Center } from 'studiocms:ui/components/center';
+ import { Group } from 'studiocms:ui/components/group';
+@@ -32,6 +32,7 @@ let searched = false;
+ const urlParams = Astro.url.searchParams;
+ 
+ async function getParams() {
++	const SDKCoreJs = await getSDKCore();
+ 	const editId = urlParams.get('edit');
+ 	const folderId = urlParams.get('folder');
+ 
+diff --git a/node_modules/studiocms/frontend/components/dashboard/profile/APITokens.astro b/node_modules/studiocms/frontend/components/dashboard/profile/APITokens.astro
+index 01669d7..592dbe1 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/profile/APITokens.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/profile/APITokens.astro
+@@ -2,7 +2,7 @@
+ import type { UserSessionData } from 'studiocms:auth/lib/types';
+ import { FormattedDate } from 'studiocms:components';
+ import { useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Button } from 'studiocms:ui/components/button';
+ import { Card } from 'studiocms:ui/components/card';
+ import { Center } from 'studiocms:ui/components/center';
+@@ -22,6 +22,7 @@ if (!user) {
+ 	throw new Error('User not found');
+ }
+ 
++const SDKCoreJs = await getSDKCore();
+ const userTokens = await runSDK(SDKCoreJs.REST_API.tokens.get(user.id));
+ 
+ const lang = Astro.locals.StudioCMS.defaultLang;
+diff --git a/node_modules/studiocms/frontend/components/dashboard/profile/SocialSignin.astro b/node_modules/studiocms/frontend/components/dashboard/profile/SocialSignin.astro
+index ae8215d..64f5e2b 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/profile/SocialSignin.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/profile/SocialSignin.astro
+@@ -1,7 +1,7 @@
+ ---
+ import type { UserSessionData } from 'studiocms:auth/lib/types';
+ import { useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import type { CombinedUserData } from 'studiocms:sdk/types';
+ import { Button } from 'studiocms:ui/components/button';
+ import { Card } from 'studiocms:ui/components/card';
+@@ -20,6 +20,7 @@ const user = data?.user ?? null;
+ let userOAuthData: CombinedUserData['oAuthData'] | undefined;
+ 
+ if (user) {
++	const SDKCoreJs = await getSDKCore();
+ 	const userFullData = await runSDK(SDKCoreJs.GET.users.byId(user.id));
+ 
+ 	if (userFullData) {
+diff --git a/node_modules/studiocms/frontend/components/dashboard/user-mgmt/InnerSidebarElement.astro b/node_modules/studiocms/frontend/components/dashboard/user-mgmt/InnerSidebarElement.astro
+index 4321289..4336ffc 100644
+--- a/node_modules/studiocms/frontend/components/dashboard/user-mgmt/InnerSidebarElement.astro
++++ b/node_modules/studiocms/frontend/components/dashboard/user-mgmt/InnerSidebarElement.astro
+@@ -1,6 +1,6 @@
+ ---
+ import { type UiLanguageKeys, useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Button } from 'studiocms:ui/components/button';
+ import { Divider } from 'studiocms:ui/components/divider';
+ import { Dropdown } from 'studiocms:ui/components/dropdown';
+@@ -15,6 +15,7 @@ interface Props {
+ 
+ const { lang } = Astro.props;
+ 
++const SDKCoreJs = await getSDKCore();
+ const Users = await runSDK(SDKCoreJs.GET.users.all());
+ 
+ const safeUsers: {
+diff --git a/node_modules/studiocms/frontend/layouts/TaxonomyLayout.astro b/node_modules/studiocms/frontend/layouts/TaxonomyLayout.astro
+index 47270c0..df875ef 100644
+--- a/node_modules/studiocms/frontend/layouts/TaxonomyLayout.astro
++++ b/node_modules/studiocms/frontend/layouts/TaxonomyLayout.astro
+@@ -1,6 +1,6 @@
+ ---
+ import { useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import type { tsPageDataCategoriesSelect, tsPageDataTagsSelect } from 'studiocms:sdk/types';
+ import { Effect } from 'effect';
+ import InnerSidebarElement from '#frontend/components/dashboard/taxonomy/InnerSidebarElement.astro';
+@@ -28,6 +28,7 @@ const parentId = searchParams.get('parent')
+ 	? Number.parseInt(searchParams.get('parent') as string, 10)
+ 	: undefined;
+ 
++const SDKCoreJs = await getSDKCore();
+ const [allCategories, allTags] = await runSDK(
+ 	Effect.all([SDKCoreJs.GET.categories.getAll(), SDKCoreJs.GET.tags.getAll()])
+ );
 diff --git a/node_modules/studiocms/frontend/middleware/index.ts b/node_modules/studiocms/frontend/middleware/index.ts
 index a39387d..4943f7e 100644
 --- a/node_modules/studiocms/frontend/middleware/index.ts
@@ -280,6 +881,88 @@ index a39387d..4943f7e 100644
  
  					// If the required role is 'none', allow access without checking user data
  					if (requiredRole === 'none') {
+diff --git a/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editfolder.astro b/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editfolder.astro
+index 14e4752..22d2582 100644
+--- a/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editfolder.astro
++++ b/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editfolder.astro
+@@ -1,6 +1,6 @@
+ ---
+ import { useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Effect } from '@withstudiocms/effect';
+ import { setDataContext } from '@withstudiocms/effect/astro/data-middleware';
+ import EditFolder from '../../../components/dashboard/content-mgmt/EditFolder.astro';
+@@ -17,6 +17,7 @@ const t = useTranslations(lang, '@studiocms/dashboard:content-index');
+ const urlParams = Astro.url.searchParams;
+ const editId = urlParams.get('folder') || '';
+ 
++const SDKCoreJs = await getSDKCore();
+ const [currentFolder, folderList] = await runSDK(
+ 	Effect.all([SDKCoreJs.GET.folder(editId), SDKCoreJs.GET.folderList()])
+ );
+diff --git a/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editpage.astro b/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editpage.astro
+index f670491..fcee4aa 100644
+--- a/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editpage.astro
++++ b/node_modules/studiocms/frontend/pages/[dashboard]/content-management/editpage.astro
+@@ -1,7 +1,7 @@
+ ---
+ import { getRegistryComponents } from 'studiocms:component-registry/runtime';
+ import { useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { setDataContext } from '@withstudiocms/effect/astro/data-middleware';
+ import { Effect } from 'effect';
+ import ComponentRegistryUI from '#frontend/components/shared/ComponentRegistryUI.astro';
+@@ -23,6 +23,7 @@ const registryData = getRegistryComponents();
+ const urlParams = Astro.url.searchParams;
+ const editId = urlParams.get('edit') || '';
+ 
++const SDKCoreJs = await getSDKCore();
+ const [pageData, users, folderList, categories, tags] = await runSDK(
+ 	Effect.all([
+ 		SDKCoreJs.GET.page.byId(editId),
+diff --git a/node_modules/studiocms/frontend/pages/[dashboard]/password-reset.astro b/node_modules/studiocms/frontend/pages/[dashboard]/password-reset.astro
+index cceeadb..d94846c 100644
+--- a/node_modules/studiocms/frontend/pages/[dashboard]/password-reset.astro
++++ b/node_modules/studiocms/frontend/pages/[dashboard]/password-reset.astro
+@@ -1,7 +1,7 @@
+ ---
+ import { useTranslations } from 'studiocms:i18n';
+ import logger from 'studiocms:logger';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Button } from 'studiocms:ui/components/button';
+ import { Card } from 'studiocms:ui/components/card';
+ import { Icon } from 'studiocms:ui/components/icon';
+@@ -26,6 +26,7 @@ if (!token || !id || !userId || userId === '') {
+ 	return new Response(null, { status: 404 });
+ }
+ 
++const SDKCoreJs = await getSDKCore();
+ const user = await runSDK(SDKCoreJs.GET.users.byId(userId));
+ 
+ if (!user) {
+diff --git a/node_modules/studiocms/frontend/pages/[dashboard]/taxonomy/categories.astro b/node_modules/studiocms/frontend/pages/[dashboard]/taxonomy/categories.astro
+index 15edff6..e19930a 100644
+--- a/node_modules/studiocms/frontend/pages/[dashboard]/taxonomy/categories.astro
++++ b/node_modules/studiocms/frontend/pages/[dashboard]/taxonomy/categories.astro
+@@ -1,6 +1,6 @@
+ ---
+ import { useTranslations } from 'studiocms:i18n';
+-import { runSDK, SDKCoreJs } from 'studiocms:sdk';
++import { getSDKCore, runSDK } from 'studiocms:sdk';
+ import { Input } from 'studiocms:ui/components/input';
+ import { Select } from 'studiocms:ui/components/select';
+ import { setDataContext } from '@withstudiocms/effect/astro/data-middleware';
+@@ -11,6 +11,7 @@ const { defaultLang: lang } = Astro.locals.StudioCMS;
+ 
+ const t = useTranslations(lang, '@studiocms/dashboard:taxonomy-index');
+ 
++const SDKCoreJs = await getSDKCore();
+ const categories = await runSDK(SDKCoreJs.GET.categories.getAll());
+ 
+ const currentPath = Astro.url.pathname;
 diff --git a/node_modules/studiocms/frontend/pages/studiocms_api/[...all].ts b/node_modules/studiocms/frontend/pages/studiocms_api/[...all].ts
 index 9035324..b6f2731 100644
 --- a/node_modules/studiocms/frontend/pages/studiocms_api/[...all].ts
