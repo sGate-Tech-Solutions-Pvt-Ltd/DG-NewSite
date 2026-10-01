@@ -646,10 +646,10 @@ index 3a43ef4..7789cc2 100644
   * Alias for `runEffect`, used to run SDK effects and convert them to plain JavaScript objects.
   *
 diff --git a/node_modules/studiocms/dist/virtuals/sdk/index.js b/node_modules/studiocms/dist/virtuals/sdk/index.js
-index 30d9d26..506636a 100644
+index 30d9d26..d139419 100644
 --- a/node_modules/studiocms/dist/virtuals/sdk/index.js
 +++ b/node_modules/studiocms/dist/virtuals/sdk/index.js
-@@ -44,13 +44,19 @@ const SDKCore = getDbClient(config.db.dialect).pipe(
+@@ -44,13 +44,23 @@ const SDKCore = getDbClient(config.db.dialect).pipe(
    Effect.flatMap(makeStudioCMSSDKCoreLive),
    Effect.catchAll((cause) => new SDKInitializationError({ cause }))
  );
@@ -661,6 +661,9 @@ index 30d9d26..506636a 100644
 +  }
 +  return _sdkCorePromise;
 +};
++const resetSDKCore = () => {
++  _sdkCorePromise = void 0;
++};
  const runSDK = runEffect;
  export {
    DBClientInitializationError,
@@ -669,6 +672,7 @@ index 30d9d26..506636a 100644
    SDKInitializationError,
    buildSDKContext,
 +  getSDKCore,
++  resetSDKCore,
    runSDK
  };
 diff --git a/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro b/node_modules/studiocms/frontend/components/dashboard/SidebarPluginLink.astro

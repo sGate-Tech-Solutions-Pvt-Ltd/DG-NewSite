@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro/middleware';
+import { resetSDKCore } from 'studiocms:sdk';
 
 /**
  * Cloudflare Hyperdrive binding exposes its connection details
@@ -29,6 +30,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
     process.env.CMS_MYSQL_PASSWORD = hyperdrive.password;
     process.env.CMS_MYSQL_DATABASE = hyperdrive.database;
   }
+
+  // Cloudflare Workers forbids reusing an I/O object (e.g. an open MySQL
+  // socket) across different requests on the same warm isolate — doing so
+  // throws "Cannot perform I/O on behalf of a different request". StudioCMS's
+  // SDK core (patched to be lazy-initialized, see patches/studiocms+0.4.4.patch)
+  // caches its DB connection pool so multiple SDK calls *within* one request
+  // share a single connection — but that cache must not survive into the
+  // next request. Resetting it here, first thing on every request, forces a
+  // fresh pool/connection next time getSDKCore() is called, while still
+  // reusing one instance for everything within this request.
+  resetSDKCore();
 
   return next();
 });
