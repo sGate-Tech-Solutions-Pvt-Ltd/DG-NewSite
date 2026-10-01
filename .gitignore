@@ -53,3 +53,6 @@ admin_dg_dump.sql
 # Scratch notes / build tmp
 connection-fix-status.txt
 tmp/
+
+# Local wrangler dev runtime state (Miniflare's local D1/KV/cache simulator)
+.wrangler/
