@@ -18,25 +18,38 @@ function connectionConfig() {
 }
 
 // Cloudflare Workers forbids reusing an I/O object (including an open TCP
-// socket, which is what a pooled connection holds) across different
-// requests — each request gets its own isolated I/O context. A module-level
-// pool shared across requests therefore throws "Cannot perform I/O on behalf
-// of a different request" as soon as a second, separate request touches it.
-// Hyperdrive is designed precisely to make per-request connections cheap (it
-// pools at the edge, not in this isolate), so the correct pattern here is a
-// fresh connection per call, closed immediately after — matching Cloudflare's
-// own documented Hyperdrive + mysql2 usage.
+// socket) across different requests — each request gets its own isolated I/O
+// context, so a connection cached forever across requests throws "Cannot
+// perform I/O on behalf of a different request" as soon as a later, separate
+// request touches it. But opening a brand-new connection for every single
+// `.query()` call is also wrong: it pays a full connection handshake per
+// query instead of per request, which can blow past Workers' CPU/wall-time
+// limits on any page that runs more than one query.
+//
+// The correct middle ground: cache one connection, reused by every
+// `.query()` call within a single request, and reset it at the very start of
+// each new request (see `resetDbConnection`, called from `src/middleware.ts`)
+// so the next request always builds its own fresh connection.
+let connectionPromise: Promise<mysql.Connection> | undefined;
+
+function getConnection(): Promise<mysql.Connection> {
+  if (!connectionPromise) {
+    connectionPromise = mysql.createConnection(connectionConfig());
+  }
+  return connectionPromise;
+}
+
+export function resetDbConnection() {
+  connectionPromise = undefined;
+}
+
 export const pool = {
   async query(
     sql: string,
     values?: unknown
   ): Promise<[mysql.RowDataPacket[] | mysql.ResultSetHeader, mysql.FieldPacket[]]> {
-    const connection = await mysql.createConnection(connectionConfig());
-    try {
-      return await connection.query(sql, values);
-    } finally {
-      await connection.end();
-    }
+    const connection = await getConnection();
+    return connection.query(sql, values);
   },
 };
 

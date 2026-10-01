@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro/middleware';
 import { resetSDKCore } from 'studiocms:sdk';
+import { resetDbConnection } from './lib/db';
 
 /**
  * Cloudflare Hyperdrive binding exposes its connection details
@@ -41,6 +42,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // fresh pool/connection next time getSDKCore() is called, while still
   // reusing one instance for everything within this request.
   resetSDKCore();
+  resetDbConnection();
 
   return next();
 });
