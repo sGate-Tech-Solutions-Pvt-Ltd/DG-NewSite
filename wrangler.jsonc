@@ -19,7 +19,11 @@
   },
   "hyperdrive": [
     { "binding": "HYPERDRIVE", "id": "d4b911e814894dd3ba7466902b53c46b" }
-  ]
-  // trigger redeploy: pick up real production CMS_ENCRYPTION_KEY
+  ],
+  // Default Worker CPU limit is 50ms regardless of plan; the Workers Paid
+  // plan's 30s/request allowance only applies once raised explicitly here.
+  "limits": {
+    "cpu_ms": 30000
+  }
 }
 
