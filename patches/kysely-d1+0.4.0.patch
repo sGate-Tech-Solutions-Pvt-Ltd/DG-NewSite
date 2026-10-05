@@ -1,0 +1,78 @@
+diff --git a/node_modules/kysely-d1/dist/index.cjs b/node_modules/kysely-d1/dist/index.cjs
+index 906657a..c36058f 100644
+--- a/node_modules/kysely-d1/dist/index.cjs
++++ b/node_modules/kysely-d1/dist/index.cjs
+@@ -97,21 +97,20 @@ class D1Connection {
+         };
+     }
+     async beginTransaction() {
+-        // this.#transactionClient = this.#transactionClient ?? new PlanetScaleConnection(this.#config)
+-        // this.#transactionClient.#conn.execute('BEGIN')
+-        throw new Error('Transactions are not supported yet.');
++        // See the matching comment in dist/index.js (the ESM build) — D1 has
++        // no real transaction API reachable from a Workers binding, so this
++        // is an intentional no-op rather than the unconditional throw this
++        // used to be, which broke every StudioCMS SDK call wrapped in
++        // client.transaction() (session creation on login, page saves,
++        // plugin config updates, etc.).
+     }
+     async commitTransaction() {
+-        // if (!this.#transactionClient) throw new Error('No transaction to commit')
+-        // this.#transactionClient.#conn.execute('COMMIT')
+-        // this.#transactionClient = undefined
+-        throw new Error('Transactions are not supported yet.');
++        // Intentional no-op — see beginTransaction.
+     }
+     async rollbackTransaction() {
+-        // if (!this.#transactionClient) throw new Error('No transaction to rollback')
+-        // this.#transactionClient.#conn.execute('ROLLBACK')
+-        // this.#transactionClient = undefined
+-        throw new Error('Transactions are not supported yet.');
++        // Intentional no-op — see beginTransaction. A thrown error partway
++        // through a "transaction" does NOT actually undo earlier statements
++        // in it, unlike a real rollback.
+     }
+     async *streamQuery(_compiledQuery, _chunkSize) {
+         throw new Error('D1 Driver does not support streaming');
+diff --git a/node_modules/kysely-d1/dist/index.js b/node_modules/kysely-d1/dist/index.js
+index 644f6b9..fd2e5a1 100644
+--- a/node_modules/kysely-d1/dist/index.js
++++ b/node_modules/kysely-d1/dist/index.js
+@@ -93,21 +93,26 @@ class D1Connection {
+         };
+     }
+     async beginTransaction() {
+-        // this.#transactionClient = this.#transactionClient ?? new PlanetScaleConnection(this.#config)
+-        // this.#transactionClient.#conn.execute('BEGIN')
+-        throw new Error('Transactions are not supported yet.');
++        // D1 has no multi-statement transaction API reachable from a Workers
++        // binding (only .batch() for a fixed list of statements known
++        // upfront, not arbitrary code with branching in between, which is
++        // what Kysely's .transaction(async trx => {...}) needs) — so this
++        // was always going to be a best-effort shim, not real ACID
++        // transactions. Previously it just threw "Transactions are not
++        // supported yet." unconditionally, which made every StudioCMS SDK
++        // call wrapped in client.transaction() fail outright (session
++        // creation on login, page saves, plugin config updates, etc.) — no
++        // isolation/atomicity is strictly worse than no functionality at
++        // all. No-op: the wrapped callback runs against the same
++        // connection with no special transactional semantics.
+     }
+     async commitTransaction() {
+-        // if (!this.#transactionClient) throw new Error('No transaction to commit')
+-        // this.#transactionClient.#conn.execute('COMMIT')
+-        // this.#transactionClient = undefined
+-        throw new Error('Transactions are not supported yet.');
++        // See beginTransaction — intentional no-op.
+     }
+     async rollbackTransaction() {
+-        // if (!this.#transactionClient) throw new Error('No transaction to rollback')
+-        // this.#transactionClient.#conn.execute('ROLLBACK')
+-        // this.#transactionClient = undefined
+-        throw new Error('Transactions are not supported yet.');
++        // See beginTransaction — intentional no-op. Note this means a
++        // thrown error partway through a "transaction" does NOT actually
++        // undo earlier statements in it, unlike a real rollback.
+     }
+     async *streamQuery(_compiledQuery, _chunkSize) {
+         throw new Error('D1 Driver does not support streaming');

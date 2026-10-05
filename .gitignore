@@ -63,3 +63,4 @@ worker-configuration.d.ts
 # One-off D1 migration output — real password hashes, live session tokens,
 # contact-form PII extracted from production MySQL. Never commit.
 scripts/d1/data-insert.sql
+scripts/d1/data-insert-REAL.sql

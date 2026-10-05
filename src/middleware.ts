@@ -1,7 +1,7 @@
 import { setD1Binding as setStudioCMSD1Binding } from '@withstudiocms/kysely/drivers/d1';
 import { defineMiddleware } from 'astro/middleware';
 import { resetSDKCore } from 'studiocms:sdk';
-import { resetDbConnection, setD1Binding as setProjectD1Binding } from './lib/db';
+import { DB_DIALECT, resetDbConnection, setD1Binding as setProjectD1Binding } from './lib/db';
 
 /**
  * Cloudflare Hyperdrive binding exposes its connection details
@@ -56,8 +56,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // next request. Resetting it here, first thing on every request, forces a
   // fresh pool/connection next time getSDKCore() is called, while still
   // reusing one instance for everything within this request.
-  resetSDKCore();
-  resetDbConnection();
+  //
+  // This is a MySQL-only workaround: D1's binding is already correctly
+  // request-scoped by Cloudflare, so it has none of the raw-socket reuse
+  // restriction this exists for. Resetting unconditionally under 'd1' was
+  // confirmed (production logs) to force an expensive full re-verification
+  // on every request — "Middleware caches verified in 12041ms" — for no
+  // benefit, so it's skipped for that dialect.
+  if (DB_DIALECT === 'mysql') {
+    resetSDKCore();
+    resetDbConnection();
+  }
 
   return next();
 });
