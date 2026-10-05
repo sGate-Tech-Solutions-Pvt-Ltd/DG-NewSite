@@ -1,0 +1,38 @@
+diff --git a/node_modules/kysely/dist/cjs/dialect/sqlite/sqlite-introspector.js b/node_modules/kysely/dist/cjs/dialect/sqlite/sqlite-introspector.js
+index 20b8010..fb9e79a 100644
+--- a/node_modules/kysely/dist/cjs/dialect/sqlite/sqlite-introspector.js
++++ b/node_modules/kysely/dist/cjs/dialect/sqlite/sqlite-introspector.js
+@@ -25,6 +25,14 @@ class SqliteIntrospector {
+             .selectFrom('sqlite_master')
+             .where('type', 'in', ['table', 'view'])
+             .where('name', 'not like', 'sqlite_%')
++            // Cloudflare D1's own internal bookkeeping tables (e.g.
++            // `_cf_METADATA`) are also off-limits to introspect — running
++            // `pragma_table_info`/`pragma_foreign_key_list` against them
++            // below throws "not authorized: SQLITE_AUTH". Excluding them
++            // here is the same fix proposed upstream in
++            // https://github.com/kysely-org/kysely/issues/1571, applied
++            // locally via patch-package until kysely-d1 picks it up.
++            .where('name', 'not like', '_cf_%')
+             .select(['name', 'sql', 'type'])
+             .orderBy('name');
+         if (!options.withInternalKyselyTables) {
+diff --git a/node_modules/kysely/dist/esm/dialect/sqlite/sqlite-introspector.js b/node_modules/kysely/dist/esm/dialect/sqlite/sqlite-introspector.js
+index 0e317d3..e7cc0d8 100644
+--- a/node_modules/kysely/dist/esm/dialect/sqlite/sqlite-introspector.js
++++ b/node_modules/kysely/dist/esm/dialect/sqlite/sqlite-introspector.js
+@@ -23,6 +23,14 @@ export class SqliteIntrospector {
+             .selectFrom('sqlite_master')
+             .where('type', 'in', ['table', 'view'])
+             .where('name', 'not like', 'sqlite_%')
++            // Cloudflare D1's own internal bookkeeping tables (e.g.
++            // `_cf_METADATA`) are also off-limits to introspect — running
++            // `pragma_table_info`/`pragma_foreign_key_list` against them
++            // below throws "not authorized: SQLITE_AUTH". Excluding them
++            // here is the same fix proposed upstream in
++            // https://github.com/kysely-org/kysely/issues/1571, applied
++            // locally via patch-package until kysely-d1 picks it up.
++            .where('name', 'not like', '_cf_%')
+             .select(['name', 'sql', 'type'])
+             .orderBy('name');
+         if (!options.withInternalKyselyTables) {

@@ -18,11 +18,13 @@
     "@libsql/client": "^0.15.15",
     "@studiocms/md": "^0.3.0",
     "astro": "^5.0.0",
+    "kysely-d1": "0.4.0",
     "mysql2": "^3.22.5",
     "patch-package": "^8.0.1",
     "studiocms": "^0.4.4"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261005.1",
     "sass": "^1.77.0",
     "wrangler": "^4.144.0"
   }

@@ -1,3 +1,63 @@
+diff --git a/node_modules/@withstudiocms/kysely/dist/drivers/d1.d.ts b/node_modules/@withstudiocms/kysely/dist/drivers/d1.d.ts
+new file mode 100644
+index 0000000..ea628b3
+--- /dev/null
++++ b/node_modules/@withstudiocms/kysely/dist/drivers/d1.d.ts
+@@ -0,0 +1,28 @@
++import { Effect } from 'effect';
++import { D1Dialect } from 'kysely-d1';
++import type { D1Database } from '@cloudflare/workers-types';
++/**
++ * Pushes the live D1 binding for the current request into the driver.
++ *
++ * Unlike the other dialects (libsql/postgres/mysql), which read connection
++ * config from env vars via `Effect.Config` at the moment the driver is
++ * constructed, D1's binding is a live object only reachable from inside the
++ * Worker's `fetch(request, env, ctx)` handler (surfaced by Astro's
++ * Cloudflare adapter as `context.locals.runtime.env.DB`). There is no
++ * env-var equivalent to copy it into, so the binding must be pushed in
++ * explicitly, once per request, before any DB query runs.
++ *
++ * @example
++ * ```typescript
++ * // in middleware, first thing on every request:
++ * setD1Binding(context.locals.runtime.env.DB);
++ * ```
++ */
++export declare const setD1Binding: (binding: D1Database) => void;
++/**
++ * Creates a D1 dialect driver for Kysely database operations, using
++ * whichever binding was last pushed via `setD1Binding`.
++ *
++ * @returns An Effect that yields a configured D1Dialect instance
++ */
++export declare const d1Driver: Effect.Effect<D1Dialect, never, never>;
+diff --git a/node_modules/@withstudiocms/kysely/dist/drivers/d1.js b/node_modules/@withstudiocms/kysely/dist/drivers/d1.js
+new file mode 100644
+index 0000000..97e7e5f
+--- /dev/null
++++ b/node_modules/@withstudiocms/kysely/dist/drivers/d1.js
+@@ -0,0 +1,20 @@
++import { Effect } from "effect";
++import { D1Dialect } from "kysely-d1";
++let currentBinding;
++function setD1Binding(binding) {
++  currentBinding = binding;
++}
++const d1Driver = Effect.sync(() => {
++  if (!currentBinding) {
++    throw new Error(
++      "No D1 binding set. Call setD1Binding(env.DB) (from @withstudiocms/kysely/drivers/d1) before the first DB query of a request — the D1 binding is only reachable from inside the Worker's fetch handler, so it must be pushed in explicitly rather than read from process.env like the other dialects."
++    );
++  }
++  return new D1Dialect({
++    database: currentBinding
++  });
++});
++export {
++  d1Driver,
++  setD1Binding
++};
 diff --git a/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js b/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js
 index 6b6aafa..3914b7c 100644
 --- a/node_modules/@withstudiocms/kysely/dist/drivers/mysql.js

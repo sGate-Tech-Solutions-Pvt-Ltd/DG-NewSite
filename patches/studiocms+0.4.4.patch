@@ -1,3 +1,16 @@
+diff --git a/node_modules/studiocms/dist/cli/utils/loadConfig.d.ts b/node_modules/studiocms/dist/cli/utils/loadConfig.d.ts
+index 5b980a8..2016bcf 100644
+--- a/node_modules/studiocms/dist/cli/utils/loadConfig.d.ts
++++ b/node_modules/studiocms/dist/cli/utils/loadConfig.d.ts
+@@ -10,7 +10,7 @@ export declare const loadConfig: (root: URL) => Effect.Effect<{
+     readonly verbose: boolean;
+     readonly logLevel: "All" | "Fatal" | "Error" | "Warning" | "Info" | "Debug" | "Trace" | "None";
+     readonly db: {
+-        readonly dialect: "libsql" | "postgres" | "mysql";
++        readonly dialect: "libsql" | "postgres" | "mysql" | "d1";
+     };
+     readonly plugins?: import("../../schemas/index.js").StudioCMSPluginSchema[] | undefined;
+     readonly storageManager?: import("../../schemas/index.js").StudioCMSStorageManagerSchema | undefined;
 diff --git a/node_modules/studiocms/dist/client/apiClient.js b/node_modules/studiocms/dist/client/apiClient.js
 index 828f3e4..ee6f76a 100644
 --- a/node_modules/studiocms/dist/client/apiClient.js
@@ -13,6 +26,74 @@ index 828f3e4..ee6f76a 100644
  const makeClient = (api) => HttpApiClient.make(api, { baseUrl }).pipe(Effect.provide(FetchHttpClient.layer));
  const authClient = makeClient(StudioCMSAuthApi);
  const dashboardClient = makeClient(StudioCMSDashboardApiSpec);
+diff --git a/node_modules/studiocms/dist/config.d.ts b/node_modules/studiocms/dist/config.d.ts
+index 2a3d405..e7811d0 100644
+--- a/node_modules/studiocms/dist/config.d.ts
++++ b/node_modules/studiocms/dist/config.d.ts
+@@ -30,7 +30,7 @@ export declare function defineStudioCMSConfig(config: StudioCMSOptions): {
+     readonly verbose?: boolean | undefined;
+     readonly logLevel?: "All" | "Fatal" | "Error" | "Warning" | "Info" | "Debug" | "Trace" | "None" | undefined;
+     readonly db?: {
+-        readonly dialect?: "libsql" | "postgres" | "mysql" | undefined;
++        readonly dialect?: "libsql" | "postgres" | "mysql" | "d1" | undefined;
+     } | undefined;
+     readonly plugins?: {
+         readonly identifier: string;
+diff --git a/node_modules/studiocms/dist/db/index.d.ts b/node_modules/studiocms/dist/db/index.d.ts
+index 8826316..cc6d2ce 100644
+--- a/node_modules/studiocms/dist/db/index.d.ts
++++ b/node_modules/studiocms/dist/db/index.d.ts
+@@ -5,7 +5,8 @@ import { Effect } from 'effect';
+ export declare enum DbDialect {
+     libsql = "libsql",
+     postgres = "postgres",
+-    mysql = "mysql"
++    mysql = "mysql",
++    d1 = "d1"
+ }
+ declare const UnsupportedDialectError_base: new <A extends Record<string, any> = {}>(args: import("effect/Types").Equals<A, {}> extends true ? void : { readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }) => import("effect/Cause").YieldableError & {
+     readonly _tag: "UnsupportedDialectError";
+@@ -40,7 +41,7 @@ export declare class DriverImportError extends DriverImportError_base<{
+ /**
+  * Get the database driver Effect for the specified dialect
+  */
+-export declare const getDbDriver: (dialect: DbDialect) => Effect.Effect<import("kysely-turso/libsql").LibSQLDialect | import("kysely").PostgresDialect | import("kysely").MysqlDialect, import("effect/ConfigError").ConfigError | UnsupportedDialectError | DriverImportError, never>;
++export declare const getDbDriver: (dialect: DbDialect) => Effect.Effect<import("kysely-turso/libsql").LibSQLDialect | import("kysely").PostgresDialect | import("kysely").MysqlDialect | import("kysely-d1").D1Dialect, import("effect/ConfigError").ConfigError | UnsupportedDialectError | DriverImportError, never>;
+ /**
+  * Get a Kysely DB Client for the specified dialect
+  */
+diff --git a/node_modules/studiocms/dist/db/index.js b/node_modules/studiocms/dist/db/index.js
+index c75b88f..4eadfef 100644
+--- a/node_modules/studiocms/dist/db/index.js
++++ b/node_modules/studiocms/dist/db/index.js
+@@ -4,6 +4,7 @@ var DbDialect = /* @__PURE__ */ ((DbDialect2) => {
+   DbDialect2["libsql"] = "libsql";
+   DbDialect2["postgres"] = "postgres";
+   DbDialect2["mysql"] = "mysql";
++  DbDialect2["d1"] = "d1";
+   return DbDialect2;
+ })(DbDialect || {});
+ class UnsupportedDialectError extends Data.TaggedError("UnsupportedDialectError") {
+@@ -17,6 +18,8 @@ const parseDbDialect = Effect.fn(
+         return "postgres" /* postgres */;
+       case "mysql":
+         return "mysql" /* mysql */;
++      case "d1":
++        return "d1" /* d1 */;
+       default:
+         return null;
+     }
+@@ -49,6 +52,10 @@ const getDbDriver = Effect.fn(function* (dialect) {
+       const driverModule = yield* _try(() => import("@withstudiocms/kysely/drivers/mysql"));
+       return yield* driverModule.mysqlDriver;
+     }
++    case "d1" /* d1 */: {
++      const driverModule = yield* _try(() => import("@withstudiocms/kysely/drivers/d1"));
++      return yield* driverModule.d1Driver;
++    }
+     default:
+       return yield* new UnsupportedDialectError({ dialect });
+   }
 diff --git a/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro b/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
 index 8aa1776..1395986 100644
 --- a/node_modules/studiocms/dist/handlers/plugin-components/Recently-created-pages.astro
@@ -183,6 +264,15 @@ index 7b3b249..dc41084 100644
  								},
  							};
  
+diff --git a/node_modules/studiocms/dist/handlers/setupDbStudio.d.ts b/node_modules/studiocms/dist/handlers/setupDbStudio.d.ts
+index d3f6f09..fe1d42f 100644
+--- a/node_modules/studiocms/dist/handlers/setupDbStudio.d.ts
++++ b/node_modules/studiocms/dist/handlers/setupDbStudio.d.ts
+@@ -1,3 +1,3 @@
+ export declare const setupDbStudio: import("astro-integration-kit").HookUtility<"astro:config:setup", [opts: {
+-    readonly dialect: "libsql" | "postgres" | "mysql";
++    readonly dialect: "libsql" | "postgres" | "mysql" | "d1";
+ }], Promise<void>>;
 diff --git a/node_modules/studiocms/dist/handlers/storage-manager/core/astro-context.js b/node_modules/studiocms/dist/handlers/storage-manager/core/astro-context.js
 index fdf4da8..28e2909 100644
 --- a/node_modules/studiocms/dist/handlers/storage-manager/core/astro-context.js
@@ -316,6 +406,73 @@ index 77b1546..fb5c090 100644
              const user = await runSDK(SDKCoreJs.REST_API.tokens.verify(token));
              if (!user) {
                return false;
+diff --git a/node_modules/studiocms/dist/index.js b/node_modules/studiocms/dist/index.js
+index d2835d3..a030071 100644
+--- a/node_modules/studiocms/dist/index.js
++++ b/node_modules/studiocms/dist/index.js
+@@ -249,6 +249,17 @@ const studiocms = () => {
+             "studiocms:client/apiClients": dynamicVirtual(["./client/apiClient.js"])
+           }
+         });
++        // setupDbStudio() registers the `virtual:studiocms/db-studio/connection`
++        // virtual module, re-exporting from
++        // toolbar/db-viewer/studio/virtual-connection/${dialect}.js. This
++        // must run unconditionally for every dialect (including 'd1') even
++        // though D1 has no real driver to offer here (no connection-string/
++        // file equivalent — it's only reachable as a live Workers binding):
++        // a *second*, unrelated consumer — handlers/storage-manager/core/
++        // api-core.js — also imports from this same virtual module
++        // regardless of the dev-toolbar panel, so skipping registration
++        // entirely (an earlier attempt) broke that instead. See the 'd1'
++        // case's own file for what it actually returns.
+         await setupDbStudio(params, options.db);
+         integrationLogger(
+           logInfo,
+diff --git a/node_modules/studiocms/dist/schemas/config/db.d.ts b/node_modules/studiocms/dist/schemas/config/db.d.ts
+index 0bf77bd..3053aa2 100644
+--- a/node_modules/studiocms/dist/schemas/config/db.d.ts
++++ b/node_modules/studiocms/dist/schemas/config/db.d.ts
+@@ -3,7 +3,7 @@ import * as Schema from 'effect/Schema';
+  * Schema for the database configuration.
+  */
+ export declare const DbConfigSchema: Schema.Struct<{
+-    dialect: Schema.optionalWith<Schema.Literal<["libsql", "postgres", "mysql"]>, {
++    dialect: Schema.optionalWith<Schema.Literal<["libsql", "postgres", "mysql", "d1"]>, {
+         default: () => "libsql";
+     }>;
+ }>;
+diff --git a/node_modules/studiocms/dist/schemas/config/db.js b/node_modules/studiocms/dist/schemas/config/db.js
+index d0f9f50..8fc8955 100644
+--- a/node_modules/studiocms/dist/schemas/config/db.js
++++ b/node_modules/studiocms/dist/schemas/config/db.js
+@@ -1,6 +1,6 @@
+ import * as Schema from "effect/Schema";
+ const DbConfigSchema = Schema.Struct({
+-  dialect: Schema.optionalWith(Schema.Literal("libsql", "postgres", "mysql"), {
++  dialect: Schema.optionalWith(Schema.Literal("libsql", "postgres", "mysql", "d1"), {
+     default: () => "libsql"
+   }).annotations({
+     description: "Database Dialect to use"
+diff --git a/node_modules/studiocms/dist/schemas/config/index.d.ts b/node_modules/studiocms/dist/schemas/config/index.d.ts
+index d96f5de..d79da94 100644
+--- a/node_modules/studiocms/dist/schemas/config/index.d.ts
++++ b/node_modules/studiocms/dist/schemas/config/index.d.ts
+@@ -233,12 +233,12 @@ export declare const StudioCMSOptionsSchema: Schema.Struct<{
+         default: () => "Info";
+     }>;
+     db: Schema.optionalWith<Schema.Schema<{
+-        readonly dialect: "libsql" | "postgres" | "mysql";
++        readonly dialect: "libsql" | "postgres" | "mysql" | "d1";
+     }, {
+-        readonly dialect?: "libsql" | "postgres" | "mysql" | undefined;
++        readonly dialect?: "libsql" | "postgres" | "mysql" | "d1" | undefined;
+     }, never>, {
+         default: () => {
+-            readonly dialect: "libsql" | "postgres" | "mysql";
++            readonly dialect: "libsql" | "postgres" | "mysql" | "d1";
+         };
+     }>;
+     plugins: Schema.optional<Schema.mutable<Schema.Array$<typeof StudioCMSPluginSchema>>>;
 diff --git a/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js b/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js
 index b4dd0ec..6946eb0 100644
 --- a/node_modules/studiocms/dist/toolbar/db-viewer/studio/env/mysql.js
@@ -338,6 +495,35 @@ index b4dd0ec..6946eb0 100644
      }
    };
    return config;
+diff --git a/node_modules/studiocms/dist/toolbar/db-viewer/studio/virtual-connection/d1.d.ts b/node_modules/studiocms/dist/toolbar/db-viewer/studio/virtual-connection/d1.d.ts
+new file mode 100644
+index 0000000..1c18041
+--- /dev/null
++++ b/node_modules/studiocms/dist/toolbar/db-viewer/studio/virtual-connection/d1.d.ts
+@@ -0,0 +1,2 @@
++import type { JsonConnectionConfig } from '../type.js';
++export declare function createConnectionFromConfig(_configFile: string, _config: JsonConnectionConfig): undefined;
+diff --git a/node_modules/studiocms/dist/toolbar/db-viewer/studio/virtual-connection/d1.js b/node_modules/studiocms/dist/toolbar/db-viewer/studio/virtual-connection/d1.js
+new file mode 100644
+index 0000000..b6bd46d
+--- /dev/null
++++ b/node_modules/studiocms/dist/toolbar/db-viewer/studio/virtual-connection/d1.js
+@@ -0,0 +1,15 @@
++// D1 has no local-file or connection-string equivalent for this dev-toolbar
++// panel to connect to directly (it's only reachable as a live Workers
++// binding, inside a request) — there is no meaningful driver to construct
++// here, unlike the sqlite/turso/mysql/postgres variants this file mirrors.
++// Returning undefined (same as the other variants' unmatched-config
++// fallthrough) just means the "Database Viewer" dev-toolbar panel shows no
++// connection for a d1-dialect project; it doesn't affect the app's actual
++// DB access, which goes through @withstudiocms/kysely/drivers/d1 instead.
++// Use the D1 dashboard's Console for ad-hoc queries during development.
++function createConnectionFromConfig(_configFile, _config) {
++  return undefined;
++}
++export {
++  createConnectionFromConfig
++};
 diff --git a/node_modules/studiocms/dist/utils/lang-helper.js b/node_modules/studiocms/dist/utils/lang-helper.js
 index c7b817d..59f3826 100644
 --- a/node_modules/studiocms/dist/utils/lang-helper.js

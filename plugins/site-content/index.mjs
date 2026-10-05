@@ -2,7 +2,7 @@ import path from 'node:path';
 import { definePlugin } from 'studiocms/plugins';
 import { contentTypes } from './lib/content-types.mjs';
 import * as siteConfig from './settings/site-config.mjs';
-import { getPool } from '../../src/lib/db.ts';
+import { getPool, DB_DIALECT } from '../../src/lib/db.ts';
 
 const CONTACT_SUBMISSIONS_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS contact_submissions (
@@ -36,6 +36,17 @@ async function ensureColumns(pool, tableName, addedColumns) {
 }
 
 async function ensureTables() {
+  // This runs at Astro's `studiocms:astro-config` hook — build/dev-start
+  // time, not inside a deployed Worker's `fetch` handler — so a D1 binding
+  // is structurally unreachable here regardless (Cloudflare only exposes
+  // bindings per-request). It's also unnecessary for D1: the 7 tables this
+  // function creates, and plugin_site_config's seed row, were already
+  // migrated once, by hand, as part of the MySQL-to-D1 cutover (see
+  // scripts/d1/schema.sql and scripts/d1/data-insert.sql). Skip entirely
+  // rather than chase MySQL-only syntax (INFORMATION_SCHEMA, INSERT IGNORE)
+  // in a code path that can't run against D1 either way.
+  if (DB_DIALECT === 'd1') return;
+
   const pool = getPool();
   for (const contentType of contentTypes) {
     await pool.query(contentType.createTableSQL);

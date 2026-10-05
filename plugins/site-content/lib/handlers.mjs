@@ -1,4 +1,4 @@
-import { getPool } from '../../../src/lib/db.ts';
+import { getPool, DB_DIALECT } from '../../../src/lib/db.ts';
 
 // StudioCMS's onEdit/onDelete plugin-hook call sites have no error boundary
 // around them (confirmed by reading the dashboard content handler) — a
@@ -27,18 +27,22 @@ export function makeHandlers(contentType) {
     // Upsert rather than a plain UPDATE: if the onCreate insert never landed
     // (e.g. a placeholder collision on a unique column), onEdit still needs
     // to persist the real values instead of silently updating zero rows.
+    //
+    // `pageId` is this table's primary key (true for every content type
+    // defined in ../content-types/*.mjs), so it's always the right conflict
+    // target for both dialects' upsert syntax.
     async onEdit({ pageData, pluginFields }) {
       try {
         const row = toRow(pluginFields || {});
         const cols = ['pageId', ...columns];
         const placeholders = cols.map(() => '?').join(', ');
         const values = [pageData.id, ...columns.map((c) => row[c])];
-        const updateClause = columns.map((c) => `\`${c}\` = VALUES(\`${c}\`)`).join(', ');
-        await getPool().query(
-          `INSERT INTO ${tableName} (${cols.map((c) => `\`${c}\``).join(', ')}) VALUES (${placeholders})
-           ON DUPLICATE KEY UPDATE ${updateClause}`,
-          values
-        );
+        const insertClause = `INSERT INTO ${tableName} (${cols.map((c) => `\`${c}\``).join(', ')}) VALUES (${placeholders})`;
+        const upsertSQL =
+          DB_DIALECT === 'd1'
+            ? `${insertClause} ON CONFLICT(\`pageId\`) DO UPDATE SET ${columns.map((c) => `\`${c}\` = excluded.\`${c}\``).join(', ')}`
+            : `${insertClause} ON DUPLICATE KEY UPDATE ${columns.map((c) => `\`${c}\` = VALUES(\`${c}\`)`).join(', ')}`;
+        await getPool().query(upsertSQL, values);
       } catch (err) {
         console.error(`[site-content] onEdit ${tableName} failed:`, err);
       }

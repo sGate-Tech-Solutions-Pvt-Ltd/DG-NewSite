@@ -5,7 +5,7 @@ import siteContentPlugin from './plugins/site-content/index.mjs';
 export default defineStudioCMSConfig({
   dbStartPage: false,
   db: {
-    dialect: 'mysql',
+    dialect: 'd1',
   },
   plugins: [mdPlugin(), siteContentPlugin()],
   dashboardConfig: {

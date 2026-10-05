@@ -1,0 +1,24 @@
+{
+  // Minimal config used only by scripts/d1/*.mjs via getPlatformProxy(), so
+  // they can get a live D1 binding without wrangler also trying to set up
+  // local simulation for every other binding in the real wrangler.jsonc
+  // (notably Hyperdrive, which demands a local Postgres connection string
+  // it has no use for here). Keep database_id in sync with wrangler.jsonc.
+  "name": "dylan-gemelli-website-d1-scripts",
+  "compatibility_date": "2026-09-26",
+  // `getPlatformProxy`'s top-level `remoteBindings: true` option only
+  // *allows* remote bindings — each binding still needs its own `"remote":
+  // true` to actually opt in, per wrangler's "mixed mode" convention.
+  // Without this, the binding silently falls back to a local Miniflare
+  // simulation at .wrangler/state/v3/d1/ instead of the real D1 database —
+  // confirmed the hard way: 01-create-studiocms-schema.mjs's first run
+  // reported "Success" against that local file, not production.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dylan-gemelli-db",
+      "database_id": "250854c5-7888-4384-8aa9-5741e4c9af94",
+      "remote": true
+    }
+  ]
+}

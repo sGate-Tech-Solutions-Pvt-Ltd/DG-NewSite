@@ -20,6 +20,13 @@
   "hyperdrive": [
     { "binding": "HYPERDRIVE", "id": "d4b911e814894dd3ba7466902b53c46b" }
   ],
+  // Primary database as of the MySQL-to-D1 cutover (studiocms.config.mjs's
+  // dialect and src/lib/db.ts's DB_DIALECT are both 'd1'). The Hyperdrive
+  // binding above is kept live, untouched, as a rollback path for a window
+  // after deploy — not deleted yet.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "dylan-gemelli-db", "database_id": "250854c5-7888-4384-8aa9-5741e4c9af94" }
+  ],
   // Default Worker CPU limit is 50ms regardless of plan; the Workers Paid
   // plan's 30s/request allowance only applies once raised explicitly here.
   "limits": {

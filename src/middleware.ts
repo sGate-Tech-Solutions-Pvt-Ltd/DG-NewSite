@@ -1,6 +1,7 @@
+import { setD1Binding as setStudioCMSD1Binding } from '@withstudiocms/kysely/drivers/d1';
 import { defineMiddleware } from 'astro/middleware';
 import { resetSDKCore } from 'studiocms:sdk';
-import { resetDbConnection } from './lib/db';
+import { resetDbConnection, setD1Binding as setProjectD1Binding } from './lib/db';
 
 /**
  * Cloudflare Hyperdrive binding exposes its connection details
@@ -30,6 +31,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
     process.env.CMS_MYSQL_USER = hyperdrive.user;
     process.env.CMS_MYSQL_PASSWORD = hyperdrive.password;
     process.env.CMS_MYSQL_DATABASE = hyperdrive.database;
+  }
+
+  // D1's binding is a live object, not a connection string, so unlike
+  // Hyperdrive above it can't be copied into process.env for the driver to
+  // read lazily — it has to be pushed into the driver module directly, once
+  // per request, before any DB query runs. Two independent DB clients need
+  // it: StudioCMS's own internal Kysely client (its dialect set in
+  // studiocms.config.mjs) and this project's own pool in src/lib/db.ts
+  // (its dialect set by DB_DIALECT there) — both must be flipped to 'd1'
+  // together for either to actually matter. Inactive (no-op) until then.
+  const d1 = context.locals.runtime?.env?.DB;
+  if (d1) {
+    setStudioCMSD1Binding(d1);
+    setProjectD1Binding(d1);
   }
 
   // Cloudflare Workers forbids reusing an I/O object (e.g. an open MySQL
