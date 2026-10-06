@@ -13,9 +13,14 @@ import { getPartners, getTestimonials, getYoutubeVideos, getSiteConfig } from '.
 import { withBase } from '../lib/withBase';
 
 // ── Fetch dynamic content from StudioCMS-managed pages ─────────────────────
-const partnersRaw  = await getPartners();
-const testimonials = await getTestimonials();
-const videos       = await getYoutubeVideos();
+// Independent D1 queries, run concurrently instead of one round-trip at a
+// time (each await was adding its own network latency serially).
+const [partnersRaw, testimonials, videos, site] = await Promise.all([
+  getPartners(),
+  getTestimonials(),
+  getYoutubeVideos(),
+  getSiteConfig(),
+]);
 
 const partners = partnersRaw.filter((p) => p.active);
 const featuredTestimonials = testimonials.filter((t) => t.featured);
@@ -39,9 +44,6 @@ const trustedPartnerImages = partnerLogoImages.length > 0
       { src: withBase('/images/img-Jinfiniti.webp'), alt: 'Health & fitness' },
       { src: withBase('/images/img-Youngr-with-capsules.webp'), alt: 'Health & fitness' },
     ];
-
-// ── Site config (StudioCMS dashboard singleton) ────────────────────────────
-const site = await getSiteConfig();
 
 // About Preview section: the heading highlights its last word in gold via a
 // static <span> — kept working for any admin-entered title by splitting off

@@ -4,19 +4,22 @@
  * Backend-managed via the site-content StudioCMS plugin.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getProtocolItems, getSiteConfig } from '../lib/content';
+import { getProtocolItems, getSiteConfig, getPartners, getTestimonials, getYoutubeVideos } from '../lib/content';
 import { withBase } from '../lib/withBase';
 
 import ImageCarousel from '../components/ImageCarousel.astro';
-
-
 import PartnersCarousel from '../components/PartnersCarousel.astro';
-import { getPartners, getTestimonials, getYoutubeVideos, getSiteConfig } from '../lib/content';
 
 // ── Fetch dynamic content from StudioCMS-managed pages ─────────────────────
-const partnersRaw  = await getPartners();
-const testimonials = await getTestimonials();
-const videos       = await getYoutubeVideos();
+// Independent D1 queries, run concurrently instead of one round-trip at a
+// time.
+const [partnersRaw, testimonials, videos, items, site] = await Promise.all([
+  getPartners(),
+  getTestimonials(),
+  getYoutubeVideos(),
+  getProtocolItems(),
+  getSiteConfig(),
+]);
 
 const partners = partnersRaw.filter((p) => p.active);
 const featuredTestimonials = testimonials.filter((t) => t.featured);
@@ -24,12 +27,6 @@ const featuredVideos = videos.filter((v) => v.featured).slice(0, 3);
 
 
 
-
-
-
-
-const items = await getProtocolItems();
-const site = await getSiteConfig();
 ---
 
 <BaseLayout

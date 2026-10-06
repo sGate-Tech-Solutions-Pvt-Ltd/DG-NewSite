@@ -6,8 +6,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getTestimonials, getSiteConfig } from '../lib/content';
 
-const testimonials = await getTestimonials();
-const site = await getSiteConfig();
+const [testimonials, site] = await Promise.all([getTestimonials(), getSiteConfig()]);
 ---
 
 <BaseLayout

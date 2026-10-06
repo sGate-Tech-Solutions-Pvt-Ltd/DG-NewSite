@@ -8,9 +8,8 @@ import ContactForm from '../components/ContactForm.astro';
 import { getPartners, getSiteConfig } from '../lib/content';
 import { withBase } from '../lib/withBase';
 
-const partnersRaw = await getPartners();
+const [partnersRaw, site] = await Promise.all([getPartners(), getSiteConfig()]);
 const partners = partnersRaw.filter((p) => p.active);
-const site = await getSiteConfig();
 
 // Hero title preserves the original manual line break ("Dylan's Trusted" /
 // "Partners") by defaulting to it and splitting any admin-entered line
