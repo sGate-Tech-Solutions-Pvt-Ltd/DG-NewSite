@@ -1,27 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { APIRoute } from 'astro';
 import { isAuthenticatedEditor } from '../../lib/auth';
 
 export const prerender = false;
 
-// Uploads are saved into `public/images/` so they're rsynced + rebuilt on the
-// next cPanel deploy (see .cpanel.yml) and survive it, same as every other
-// content image path (see plugin_* `avatar`/`logo`/`thumbnail` text fields).
-//
-// In production the running @astrojs/node server never reads from `public/`
-// though — it only serves static files out of the built `dist/client/`
-// (resolved relative to the compiled server entry, not `process.cwd()`; see
-// `resolveClientDir` in @astrojs/node/dist/shared.js). So an upload also has
-// to be written straight into `dist/client/images` or it's invisible on the
-// live site until the next full rebuild.
-const SOURCE_IMAGES_DIR = path.join(process.cwd(), 'public', 'images');
-const SERVED_IMAGES_DIR = import.meta.env.PROD
-  ? fileURLToPath(new URL('../../../client/images/', import.meta.url))
-  : SOURCE_IMAGES_DIR;
-
+// Uploads go to R2 (see the IMAGES binding in wrangler.jsonc) since the
+// Workers runtime has no writable filesystem. They're served back out at
+// runtime by src/pages/images/[filename].ts, under the same `/images/...`
+// path used by every other content image reference (plugin_* avatar/logo/
+// thumbnail text fields, etc).
 const ALLOWED_TYPES: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
@@ -43,9 +30,17 @@ function slugifyBase(name: string): string {
   );
 }
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   if (!(await isAuthenticatedEditor(cookies))) {
     return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), { status: 403 });
+  }
+
+  const bucket = locals.runtime?.env?.IMAGES;
+  if (!bucket) {
+    return new Response(
+      JSON.stringify({ ok: false, error: 'Image storage is not configured' }),
+      { status: 500 }
+    );
   }
 
   const formData = await request.formData();
@@ -68,15 +63,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   const filename = `${slugifyBase(file.name)}-${randomUUID().slice(0, 8)}${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = await file.arrayBuffer();
 
-  await mkdir(SERVED_IMAGES_DIR, { recursive: true });
-  await writeFile(path.join(SERVED_IMAGES_DIR, filename), buffer);
-
-  if (SERVED_IMAGES_DIR !== SOURCE_IMAGES_DIR) {
-    await mkdir(SOURCE_IMAGES_DIR, { recursive: true });
-    await writeFile(path.join(SOURCE_IMAGES_DIR, filename), buffer);
-  }
+  await bucket.put(filename, buffer, {
+    httpMetadata: { contentType: file.type },
+  });
 
   return new Response(JSON.stringify({ ok: true, path: `/images/${filename}` }), {
     status: 200,

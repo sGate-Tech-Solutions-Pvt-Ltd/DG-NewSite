@@ -45,6 +45,12 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "dylan-gemelli-db", "database_id": "250854c5-7888-4384-8aa9-5741e4c9af94" }
   ],
+  // Uploaded content images (src/pages/api/upload-image.ts). Workers has no
+  // writable filesystem, so these go to R2 instead of public/images/ and are
+  // served back out at runtime by src/pages/images/[filename].ts.
+  "r2_buckets": [
+    { "binding": "IMAGES", "bucket_name": "dylan-gemelli-images" }
+  ],
   // Default Worker CPU limit is 50ms regardless of plan; the Workers Paid
   // plan's 30s/request allowance only applies once raised explicitly here.
   "limits": {
