@@ -4,6 +4,72 @@ import { resetSDKCore } from 'studiocms:sdk';
 import { DB_DIALECT, resetDbConnection, setD1Binding as setProjectD1Binding } from './lib/db';
 
 /**
+ * Core StudioCMS dashboard pages render their own image-path text fields
+ * (OpenGraph/Hero Image on the page editor, Site Icon + Default OG Image on
+ * Site Configuration) via a `StorageInput` component whose "Browse Files"
+ * button only works when a Storage Manager plugin is registered — this
+ * project doesn't have one. Rather than patching `node_modules`, these
+ * routes get the same "Upload image" button + thumbnail preview used on our
+ * own plugin pages (see public/scripts/image-upload-field.js) injected
+ * client-side, targeting these known field names by `name` attribute.
+ */
+const DASHBOARD_IMAGE_FIELDS: Record<string, string[]> = {
+  '/dashboard/content-management/edit': ['page-hero-image'],
+  '/dashboard/content-management/create': ['page-hero-image'],
+  '/dashboard/configuration': ['site-icon', 'default-og-image'],
+};
+
+function stripBase(pathname: string): string {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  if (!base) return pathname;
+  return pathname.startsWith(base) ? pathname.slice(base.length) || '/' : pathname;
+}
+
+async function injectImageUploadFields(response: Response, fieldNames: string[]): Promise<Response> {
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('text/html')) return response;
+
+  const html = await response.text();
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const scriptSrc = `${base}/scripts/image-upload-field.js`;
+  const uploadUrl = `${base}/api/upload-image`;
+
+  const injected = `
+<script src="${scriptSrc}"></script>
+<script>
+(function () {
+  var fieldNames = ${JSON.stringify(fieldNames)};
+  var uploadUrl = ${JSON.stringify(uploadUrl)};
+  function attachAll() {
+    for (var i = 0; i < fieldNames.length; i++) {
+      var input = document.querySelector('[name="' + fieldNames[i] + '"]');
+      if (input && window.attachImageUploadField) {
+        window.attachImageUploadField(input, { uploadUrl: uploadUrl });
+      }
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachAll);
+  } else {
+    attachAll();
+  }
+})();
+</script>
+</body>`;
+
+  const newHtml = html.includes('</body>') ? html.replace('</body>', injected) : html + injected;
+
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+
+  return new Response(newHtml, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+/**
  * Cloudflare Hyperdrive binding exposes its connection details
  * (`env.HYPERDRIVE.host/port/user/password/database`) ONLY inside a
  * request's `fetch(request, env, ctx)` handler — surfaced by Astro's
@@ -68,5 +134,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     resetDbConnection();
   }
 
-  return next();
+  const response = await next();
+
+  const imageFields = DASHBOARD_IMAGE_FIELDS[stripBase(context.url.pathname)];
+  if (imageFields) {
+    return injectImageUploadFields(response, imageFields);
+  }
+
+  return response;
 });

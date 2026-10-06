@@ -10,6 +10,7 @@
 import { Button } from 'studiocms:ui/components/button';
 import { Card } from 'studiocms:ui/components/card';
 import DynamicSettingsRenderer from 'studiocms/frontend/components/shared/DynamicSettingsRenderer.astro';
+import { withBase } from '../../../../src/lib/withBase.ts';
 import { getPool } from '../../../../src/lib/db.ts';
 import { buildFields, fieldGroups } from '../../settings/site-config.mjs';
 
@@ -20,9 +21,11 @@ const groupedFields = fieldGroups.map((group) => ({
   title: group.title,
   fields: group.fields.map((name) => fieldsByName[name]).filter(Boolean),
 }));
+const imageFieldNames = fields.filter((f) => f.isImage).map((f) => f.name);
 ---
 
-<form id="site-settings-form" class="site-settings-form">
+<script src={withBase('/scripts/image-upload-field.js')}></script>
+<form id="site-settings-form" class="site-settings-form" data-image-fields={JSON.stringify(imageFieldNames)}>
   {groupedFields.map((group) => (
     <Card fullWidth>
       <div slot="header">{group.title}</div>
@@ -54,6 +57,19 @@ const groupedFields = fieldGroups.map((group) => ({
   import { withBase } from '../../../../src/lib/withBase.ts';
 
   const form = document.getElementById('site-settings-form');
+
+  // Every field flagged `isImage: true` in site-config.mjs gets an upload
+  // button + live thumbnail preview, instead of editors having to know/type
+  // the exact /images/... path by hand.
+  try {
+    const imageFieldNames = JSON.parse(form?.dataset.imageFields || '[]');
+    for (const fieldName of imageFieldNames) {
+      const input = form?.querySelector(`[name="${fieldName}"]`);
+      if (input) window.attachImageUploadField?.(input, { uploadUrl: withBase('/api/upload-image') });
+    }
+  } catch (err) {
+    console.error('[site-settings] failed to attach image upload fields:', err);
+  }
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
