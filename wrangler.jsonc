@@ -17,8 +17,15 @@
   "alias": {
     "pg": "./stubs/pg.js"
   },
+  // localConnectionString is a placeholder only: the pg client is stubbed
+  // (see the "pg" alias above), so nothing actually connects through this
+  // locally — it just satisfies wrangler dev's binding validation.
   "hyperdrive": [
-    { "binding": "HYPERDRIVE", "id": "d4b911e814894dd3ba7466902b53c46b" }
+    {
+      "binding": "HYPERDRIVE",
+      "id": "d4b911e814894dd3ba7466902b53c46b",
+      "localConnectionString": "postgres://user:pass@localhost:5432/placeholder"
+    }
   ],
   // Primary database as of the MySQL-to-D1 cutover (studiocms.config.mjs's
   // dialect and src/lib/db.ts's DB_DIALECT are both 'd1'). The Hyperdrive
