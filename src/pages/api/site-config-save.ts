@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getPool } from '../../lib/db';
+import { DB_DIALECT, getPool } from '../../lib/db';
 import { isAuthenticatedAdmin } from '../../lib/auth';
 // @ts-expect-error - plain .mjs module, no type declarations
 import { defaultsRow, toRow } from '../../../plugins/site-content/settings/site-config.mjs';
@@ -19,13 +19,13 @@ export const POST: APIRoute = async (context) => {
     const cols = ['id', ...columns];
     const placeholders = cols.map(() => '?').join(', ');
     const values = ['default', ...columns.map((c) => row[c])];
-    const updateClause = columns.map((c) => `\`${c}\` = VALUES(\`${c}\`)`).join(', ');
+    const insertClause = `INSERT INTO plugin_site_config (${cols.map((c) => `\`${c}\``).join(', ')}) VALUES (${placeholders})`;
+    const upsertSQL =
+      DB_DIALECT === 'd1'
+        ? `${insertClause} ON CONFLICT(\`id\`) DO UPDATE SET ${columns.map((c) => `\`${c}\` = excluded.\`${c}\``).join(', ')}`
+        : `${insertClause} ON DUPLICATE KEY UPDATE ${columns.map((c) => `\`${c}\` = VALUES(\`${c}\`)`).join(', ')}`;
 
-    await getPool().query(
-      `INSERT INTO plugin_site_config (${cols.map((c) => `\`${c}\``).join(', ')}) VALUES (${placeholders})
-       ON DUPLICATE KEY UPDATE ${updateClause}`,
-      values
-    );
+    await getPool().query(upsertSQL, values);
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
