@@ -1,7 +1,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "dylan-gemelli-website",
-  "main": "dist/_worker.js/index.js",
+  // Wraps dist/_worker.js/index.js (Astro's generated handler) to also add
+  // a scheduled() export for the warm-up cron below — fetch requests are
+  // passed through to Astro's handler unchanged.
+  "main": "src/worker-entry.js",
   "compatibility_date": "2026-09-26",
   "compatibility_flags": [
     "global_fetch_strictly_public",
@@ -9,6 +12,14 @@
   ],
   "observability": {
     "enabled": true
+  },
+  // Pings the homepage every 2 minutes so StudioCMS's SDK middleware cache
+  // (verifyCache, ~3.6s of D1 queries on a cold isolate) stays warm for real
+  // visitors instead of being paid by whoever hits a freshly spun-up
+  // isolate. Only warms the isolate(s) Cloudflare runs this trigger from,
+  // not every edge location — a partial mitigation, not a full fix.
+  "triggers": {
+    "crons": ["*/2 * * * *"]
   },
   "assets": {
     "binding": "ASSETS",
