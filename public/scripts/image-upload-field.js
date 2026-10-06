@@ -14,7 +14,12 @@
     input.dataset.imageUploadAttached = 'true';
 
     const uploadUrl = (opts && opts.uploadUrl) || '/api/upload-image';
-    const anchor = input.closest('label') || input;
+    // Core StudioCMS's StorageInput wraps its <label> in a flex row
+    // (`.storage-input-container`, shared with its own disabled "Browse
+    // Files" button) — anchoring on that row instead of the inner <label>
+    // keeps our upload button out of that row, so it drops to its own line
+    // below the field instead of squeezing in beside the input.
+    const anchor = input.closest('.storage-input-container') || input.closest('label') || input;
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'display:flex;align-items:center;gap:12px;margin:8px 0 16px;';
